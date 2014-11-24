@@ -84,8 +84,8 @@ public class Table{
     }
     
     public boolean typeInAttributes(String type, ArrayList<Attribute> cols){
-        for(int i = 0; i < cols.size(); i++){
-            if(cols.get(i).getType().equals(type)){
+        for (Attribute col : cols) {
+            if (col.getType().equals(type)) {
                 return true;
             }
         }
@@ -93,7 +93,6 @@ public class Table{
     }
     
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
-        ArrayList<Field> rec = new ArrayList<Field>();
         if(record.size() != this.numAttributes)
             throw new IllegalArgumentException("invalid record length");
         this.records.add(record);
@@ -101,8 +100,8 @@ public class Table{
     }
     
     public void deleteRecord(int i){
-        if(i < records.size() && i >= 0){  
-            records.remove(i);
+        if(i < this.records.size() && i >= 0){  
+            this.records.remove(i);
             this.numRecords--;
         }
         else{
