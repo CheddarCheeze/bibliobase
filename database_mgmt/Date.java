@@ -22,6 +22,32 @@ public class Date{
         set(date);
     }
     
+    public Date(String date){
+        String[] nums = date.split("[-]");
+        boolean isDate = true;
+        if(nums.length == 3){
+            for(int i = 0; i < nums.length; i++){
+                if(isInt(nums[i])){
+                    int temp = Integer.parseInt(nums[i]);
+                    if(i == 0 && (temp < 1 || temp > 31))
+                        isDate = false;
+                    else
+                        this.day = temp;
+                    if(i == 1 && (temp < 1 || temp > 12))
+                        isDate = false;
+                    else
+                        this.month = temp;
+                    if(i == 2 && (temp < 0 || temp > 9999))
+                        isDate = false;
+                    else
+                        this.year = temp;
+                }
+            }
+        }else{
+            throw new IllegalArgumentException("attempted conversion of invalid string to date");
+        }
+    }
+    
     public String toString(){
         if(day < 10 && month < 10){
             return "0" + day + "-0" + month + "-" + year;
@@ -109,5 +135,41 @@ public class Date{
             isDate = false;
         }
         return isDate;
+    }
+    
+    public boolean compareDates(Date d, String operator){
+        switch (operator) {
+            case "=":   return (this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day == d.getDay());
+            case "!=":  return !(this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day == d.getDay());
+            case "<":   return ((this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day < d.getDay()) ||
+                                (this.year == d.getYear() &&
+                                this.month < d.getMonth()) ||
+                                this.year < d.getYear());
+            case ">":   return ((this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day > d.getDay()) ||
+                                (this.year == d.getYear() &&
+                                this.month > d.getMonth()) ||
+                                this.year > d.getYear());
+            case "<=":  return ((this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day <= d.getDay()) ||
+                                (this.year == d.getYear() &&
+                                this.month <= d.getMonth()) ||
+                                this.year <= d.getYear());
+            case ">=":  return ((this.year == d.getYear() &&
+                                this.month == d.getMonth() &&
+                                this.day >= d.getDay()) ||
+                                (this.year == d.getYear() &&
+                                this.month >= d.getMonth()) ||
+                                this.year >= d.getYear());
+            default: return false;
+        }
     }
 }

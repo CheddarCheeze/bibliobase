@@ -6,7 +6,12 @@ package database_mgmt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 public class BiblioBaseDBMS {
 
@@ -19,8 +24,8 @@ public class BiblioBaseDBMS {
         for(int i = 0; i < command.length; i++){
             String[] temp = command[i].split("[ ,]|"
                     + "((?<=\\()|(?=\\()|(?<=\\))|(?=\\)))");
-            if(temp.length <= 2){
-                throw new IllegalArgumentException("invalid command length");
+            if(temp.length < 1){
+                throw new IllegalArgumentException("empty command sent to parser");
             }
             //tokenizes each command by word into a 2D ArrayList
             words.add(new ArrayList<>(Arrays.asList(temp)));
@@ -52,39 +57,148 @@ public class BiblioBaseDBMS {
                 throw new IllegalArgumentException("a quote was not closed");
             }
         }
-        for (ArrayList<String> word : words) {
-            switch (word.get(0)) {
+        for (ArrayList<String> word : words){
+            if(word.size() < 1){
+                throw new IllegalArgumentException("empty command sent to parser --2");
+            }
+            switch (word.get(0)){
                 case "CREATE":
                     //if there are an odd # of tokens and size is >= 7
-                    if ((word.size() & 1) == 1 && word.size() >= 7) {
+                    if((word.size() & 1) == 1 && word.size() >= 7){
                         createCheck(word);
                     } else {
                         throw new IllegalArgumentException("invalid CREATE command length");
                     }   break;
                 case "INSERT":
                     //if size of command is >= 7
-                    if (word.size() >= 7) {
+                    if(word.size() >= 7){
                         insertCheck(word);
                     } else {
                         throw new IllegalArgumentException("invalid INSERT command length");
-                }   break;
+                    }   break;
                 case "DELETE":
                     //if size of command is < 3 words, the command is invalid
-                    if (word.size() >= 3) {
+                    if(word.size() >= 3){
                         deleteCheck(word);
                     } else {
                         throw new IllegalArgumentException("invalid DELETE command length");
                     }   break;
+                case "SELECT":
+                    if(word.size() >= 4){
+                        selectCheck(word);
+                    } else {
+                        throw new IllegalArgumentException("invalid SELECT command length");
+                    }   break;
+                case "EXIT":
+                    break;
                 default:
-                    throw new IllegalArgumentException("\"" + word.get(0) + "\'" + " is not a valid command");
+                    throw new IllegalArgumentException("\"" + word.get(0) + "\"" + " is not a valid command");
             }
         }
     }
     
+    public static void selectCheck(ArrayList<String> word){
+        String tableName = new String();
+        String attName = new String();
+        String attType = new String();
+        int tI = 0;  //index for current table insertion will be occuring in
+        int wP = 0;  //keeps track of word place in command
+        ArrayList<String> colNames = null;
+        ArrayList<ArrayList<Field>> records = Tables.get(tI).getRecords();
+        ArrayList<Integer> colIdx = null;
+        ArrayList<Integer> I = null;
+        boolean selectAll = false;
+        
+        //check if selecting all columns
+        wP++;
+        if(word.get(wP).equals("*")){
+            selectAll = true;
+        }else{  //check for column names
+            colNames = new ArrayList<>();
+            int size = word.size();
+            for(int i = wP; i < size; i++){
+                //break out of loop when FROM word is found
+                if(word.get(i).equals("FROM")){
+                    if(i == 2){
+                        throw new IllegalArgumentException("no columns selected");
+                    }else{
+                        break;
+                    }
+                }
+                else if(isCommand(word.get(i))){
+                    throw new IllegalArgumentException("column name cannot be a command word");
+                }
+                attName = word.get(i);
+                colNames.add(attName);
+                wP = i;
+            }   //check if loop didn't have inside columns
+            if(colNames.isEmpty()){
+                throw new IllegalArgumentException("no columns selected--2");
+            }
+        }
+        //check from FROM word
+        wP++;
+        if(!word.get(wP).equals("FROM")){
+            throw new IllegalArgumentException("no FROM word detected");
+        }
+        //checks if 3rd word is a command instead of a table name
+        wP++;
+        if(isCommand(word.get(wP))){
+            throw new IllegalArgumentException("command cannot be table name"); 
+        }else{  //search for table with name from Tables
+            tI = tableSearch(word.get(wP));
+        }
+        //check if there are no extra words
+        wP++;
+        if(wP == word.size()){
+            displayTable(Tables.get(tI));   //execute basic select display
+            return;
+        }
+        //get column indexes
+        colIdx = new ArrayList<>();
+        for(String col : colNames){
+            colIdx.add(Tables.get(tI).getAttributeIdx(col));
+        }
+        //check if the next word is WHERE
+        if(!word.get(wP).equals("WHERE")){
+            throw new IllegalArgumentException("word should be WHERE"); 
+        }else{  //display selected values
+            wP++;
+            I = where(word, tI, wP, "SELECT");
+            String a;
+            int idx = 0;
+            //display columns
+            System.out.println();
+            for(int i = 0; i < colNames.size(); i++){
+                a = colNames.get(i);
+                System.out.format("%-12s",a);
+                if(i != colNames.size()-1)
+                    System.out.format("%-9s","|");
+            }
+            System.out.println();
+            //display seperator line
+            for(int i = 0; i < colNames.size(); i++){
+                System.out.print("-----------------");
+            }
+            //display values
+            System.out.println();
+            for(int i = 0; i < I.size(); i++){
+                int row = I.get(i);
+                System.out.println();
+                for(int j = 0; j < colIdx.size(); j++){
+                    String f = records.get(row).get(j).getValue();
+                    System.out.format("%-21s", f);
+                }
+                System.out.println();
+            }
+            System.out.println();
+        }
+    }
+    
     public static void deleteCheck(ArrayList<String> word){
-        //--------------------------------UNDER CONSTRUCTION------------------------------------
         String tableName = new String();
         int tI = 0;  //index for current table insertion will be occuring in
+        ArrayList<Integer> I = null;
         
         //checks if second word is FROM
         if(!word.get(1).equals("FROM")){
@@ -110,21 +224,256 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("invalid command \""+
                     word.get(3)+"\"");
         }else{
-            
+            I = where(word, tI, 4, "DELETE");
+            for(int k = I.size()-1; k > -1; k--){
+                Tables.get(tI).deleteRecord(I.get(k));
+            }
         }
         
     }
     
-    public static ArrayList<Field> where(ArrayList<String> word, int tI){
-        //----------------------------UNDER CONSTRUCTION-----------------------------------
-        //handles multiple operations and returns concatenated fields
-        return null;
+    public static Set<Integer> operateOnRecords(int tI, List<String> tok, 
+            ArrayList<ArrayList<Field>> records){
+        //initialize variables
+        Set<Integer> I = new HashSet<Integer>();
+        ArrayList<Field> F = new ArrayList<>();     //subject to removal
+        int attIdx = 0;
+        String currentColType = null;
+        
+        //perform operations
+        attIdx = Tables.get(tI).getAttributeIdx(tok.get(0));
+        currentColType = Tables.get(tI).getAttributes().get(attIdx).getType();
+        int j = 0;
+        Iterator<ArrayList<Field>> it = Tables.get(tI).getRecords().iterator();
+        while(it.hasNext()){
+            Field val = new Field(tok.get(2), currentColType);
+            ArrayList<Field> rec = it.next();
+            //ignore occurances where the column as a null entree but query value is not null
+            if(rec.get(attIdx).getValue() == null && val.getValue() != null){
+                //ignore
+            }
+            //compare number field
+            else if(val.getType().equals("FLOAT") && 
+                    ( (tok.get(1).equals("=") && 
+                        rec.get(attIdx).compareFields(val,"=")) ||
+                    (tok.get(1).equals("!=") && 
+                        rec.get(attIdx).compareFields(val,"!=")) ||
+                    (tok.get(1).equals("<") && 
+                        rec.get(attIdx).compareFields(val,"<")) || 
+                    (tok.get(1).equals(">") && 
+                        rec.get(attIdx).compareFields(val,">")) ||
+                    (tok.get(1).equals("<=") && 
+                        rec.get(attIdx).compareFields(val,"<=")) ||
+                    (tok.get(1).equals(">=") && 
+                        rec.get(attIdx).compareFields(val,">=")) ) ){
+                F.add(rec.get(attIdx));
+                I.add(j);
+            }
+            //compare string fields
+            else if(val.getType().equals("STRING") &&
+                    ( (tok.get(1).equals("=") &&
+                        rec.get(attIdx).isEqual(val)) ||
+                    (tok.get(1).equals("!=") &&
+                        !rec.get(attIdx).isEqual(val)) ) ){
+                F.add(rec.get(attIdx));
+                I.add(j);
+            }
+            //compare date fields
+            else if(val.getType().equals("DATE") &&
+                    ( (tok.get(1).equals("=") &&
+                        rec.get(attIdx).isEqual(val)) ||
+                    (tok.get(1).equals("!=") &&
+                        !rec.get(attIdx).isEqual(val)) ||
+                    (tok.get(1).equals("<") && 
+                        rec.get(attIdx).compareFields(val,"<")) || 
+                    (tok.get(1).equals(">") && 
+                        rec.get(attIdx).compareFields(val,">")) ||
+                    (tok.get(1).equals("<=") && 
+                        rec.get(attIdx).compareFields(val,"<=")) ||
+                    (tok.get(1).equals(">=") && 
+                        rec.get(attIdx).compareFields(val,">=")) ) ){
+                F.add(rec.get(attIdx));
+                I.add(j);
+            }
+            j++;
+        }
+        return I;
     }
     
-    public static ArrayList<Field> operation(String colName, String operater, String value, int tI){
-        //----------------------------UNDER CONSTRUCTION-----------------------------------
-        //does operation and returns relevant fields
-        return null;
+    public static void AND(ArrayList<String> word, int w, int tI, 
+            Set<Integer> s, boolean reParse){
+        //initialize variables
+        Set<Integer> set1 = new HashSet<Integer>();
+        Set<Integer> set2 = new HashSet<Integer>();
+        ArrayList<String> tok = new ArrayList<>();   //stores operation tokens 
+        ArrayList<ArrayList<Field>> records = Tables.get(tI).getRecords();
+        int attIdx = 0;
+
+        //store two operations and a logic operator
+        for(int i = 0; i < 7; i++){
+            if(i != 3)  //do not store logic operator
+                tok.add(word.get(w+i-3));  
+        }
+        //perform operations
+        List<String> temp = tok.subList(0, 3);
+        set1 = operateOnRecords(tI, temp, records);
+        temp = tok.subList(3, 6);
+        set2 = operateOnRecords(tI, temp, records);
+        if(reParse){            //3-way intersection
+            set1.retainAll(set2);
+            s.retainAll(set1);
+        }
+        else{                   //2-way intersection
+            set1.retainAll(set2);
+            s.addAll(set1);     //union previous records with current
+        }
+    }
+    
+    public static void OR(int tI, Set<Integer> s, ArrayList<String> tok){
+        //initialize variables
+        Set<Integer> set = new HashSet<>(); 
+        ArrayList<ArrayList<Field>> records = Tables.get(tI).getRecords();
+
+        //perform OR operations
+        records = Tables.get(tI).getRecords();
+        List<String> temp;
+        for(int i = 0; i < tok.size(); i+=3){ //i+=3 will parse operations in tok
+            temp = tok.subList(i, i+3);
+            set.addAll(operateOnRecords(tI, temp, records));
+        }
+        //merge with s
+        s.addAll(set);
+    }
+    
+    public static ArrayList<Integer> where(ArrayList<String> word, int tI, 
+            int wP, String c){
+        //-------------------------------UNDER_CONSTRUCTION-----------------------------------------
+        //handles multiple operations and returns concatenated fields
+        int place = 1;
+        int attIdx = 0;
+        String colName = null;
+        String operator = null;
+        String value = null;
+        ArrayList<String> tok = new ArrayList<>();
+        ArrayList<ArrayList<Field>> records = null;
+        ArrayList<Field> F = new ArrayList<>();     //subject to removal
+        ArrayList<Integer> I = new ArrayList<>();
+        Set<Integer> set = new HashSet<Integer>();
+        boolean reParse = false;
+        
+        //test entrees, execute AND operations, store OR operations
+        for(int i = wP; i < word.size(); i++){
+            if(place > 4){  //col = val (only groups of four at a time)
+                place = 1;
+            }
+            //set operation components
+            if(place == 1){ 
+                colName = word.get(i);
+            }
+            else if(place == 2){
+                operator = word.get(i);
+            }
+            else if(place == 3){
+                value = word.get(i);
+                //if we're at the end of the command and format is correct
+                if(i == word.size()-1 && !isLogicOp(word.get(i)) &&
+                        !Tables.get(tI).nameInAttributes(word.get(i))){
+                    tok.add(colName); //add column name
+                    tok.add(operator); //add operator
+                    tok.add(value); //add value
+                }
+                else if(i == word.size()-1){
+                    throw new IllegalArgumentException("invalid formatting for "
+                            + "last operation in where clause");
+                }
+            }
+            else if(place == 4){ //test and store string entrees
+                if(!isLogicOp(word.get(i))){
+                    throw new IllegalArgumentException("\""+word.get(i)+
+                            "\" should be a logical operator");
+                }
+                if(!Tables.get(tI).nameInAttributes(colName)){
+                    throw new IllegalArgumentException("column name \"" +
+                            colName + "\" not in table");
+                }
+                if(!isOperator(operator)){
+                    throw new IllegalArgumentException(operator
+                            + " is an invalid operator");
+                }
+                if(isCommand(value)){
+                    throw new IllegalArgumentException(value+"is a command"
+                            + " word, not a valid value");
+                } 
+                //store OR operations
+                if(word.get(i).equals("OR")){
+                    if(colName != null && operator != null && value != null){
+                        tok.add(colName); //add column name
+                        tok.add(operator); //add operator
+                        tok.add(value); //add value
+                    }
+                }
+                else{   //word must be "AND"
+                    colName = null; //set so OR wont add to tok
+                    operator = null;
+                    value = null;
+                    if(!reParse){
+                        //test next 4 tokens and check if next logical op is AND
+                        if(i+4 < word.size() && !isLogicOp(word.get(i+4))){
+                            throw new IllegalArgumentException(word.get(i+4)+
+                                    " is an invalid operator");
+                        }
+                        else if(!Tables.get(tI).nameInAttributes(word.get(i+1))){
+                            throw new IllegalArgumentException("column name \"" +
+                                    word.get(i+1) + "\" not in table");
+                        }
+                        else if(!isOperator(word.get(i+2))){
+                            throw new IllegalArgumentException(word.get(i+2)
+                                    + " is an invalid operator");
+                        }
+                        else if(isCommand(word.get(i+3))){
+                            throw new IllegalArgumentException(word.get(i+3)+
+                                    "is a command word, not a valid value");
+                        } 
+                        
+                        AND(word, i, tI, set, false);
+                        
+                        if(i+4 < word.size() && word.get(i+4).equals("AND")){
+                            reParse = true;
+                            i+=3; //3 + i++ = 4 (jump to next operator
+                            place--;    //we're moving to the same place -compensate
+                        }
+                        else if(i+4 >= word.size()){
+                            break;
+                        }
+                    }
+                    else{
+                        AND(word, i, tI, set, true);
+                        reParse = false;
+                    }
+                }
+            }
+            place++;
+        }
+        if(place != 4){
+            throw new IllegalArgumentException("incomplete entrees in WHERE"
+                    + " clause");
+        }
+        //perform OR operations
+        records = Tables.get(tI).getRecords();
+        OR(tI, set, tok);
+        
+        //command operations
+        if(c.equals("DELETE")){
+            I = new ArrayList(set); 
+            Collections.sort(I);    //mergesort list of row indexes
+            return I;
+        }
+        else if(c.equals("SELECT")){
+            I = new ArrayList(set); 
+            Collections.sort(I);    //mergesort list of row indexes
+            return I;
+        }
+        throw new IllegalArgumentException("WHERE cannot operate over "+c);
     }
     
     public static void insertCheck(ArrayList<String> word){
@@ -247,13 +596,17 @@ public class BiblioBaseDBMS {
             int leftInCol = colNames.size()-c;
             
             for (Attribute column : columns) {
+                Field f = null;
                 if (c < colNames.size() && column.getName().equals(colNames.get(c))) {
-                    record2.add(new Field(record.get(c)));
+                    f = new Field(record.get(c));
+                    record2.add(f);
                     leftInCol--;    //move to next in user-selected columns
                     c++;
                 } //if attributes don't match
                 else {
-                    record2.add(new Field());
+                    f = new Field();
+                    f.setType(column.getType());
+                    record2.add(f);
                 }
                 leftInTab--;
                 if(leftInTab < leftInCol){  //finds if remaining columns can be checked
@@ -297,7 +650,7 @@ public class BiblioBaseDBMS {
         //check if the next two column values aren't commands
         //if they pass, then add them to the column list
         for(int i = 4; i < word.size()-1; i++){
-            //throw excpetion if word is a command
+            //throw exception if word is a command
             if(isCommand(word.get(i))){
                 throw new IllegalArgumentException("invalid column name or type");
             } //for even word, check if it's closed in single quotes
@@ -336,7 +689,7 @@ public class BiblioBaseDBMS {
     
     public static void displayTable(Table table){
         Attribute a;
-        System.out.println("Table name: "+table.getName());
+        System.out.println("\nTable name: "+table.getName());
         for(int i = 0; i < table.getNumAttributes(); i++){
             a = table.getAttributes().get(i);
             System.out.format("%-12s",a.getName());
@@ -360,7 +713,15 @@ public class BiblioBaseDBMS {
     
     public static boolean isCommand(String str){
         return str.matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
-                + "DELETE|INSERT|INTO|VALUES|DROP");
+                + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK");
+    }
+    
+    public static boolean isOperator(String str){
+        return str.matches("[/*+-=<>]|<=|>=|!=");
+    }
+    
+    public static boolean isLogicOp(String str){
+        return str.matches("OR|AND");
     }
     
     public static boolean isFloat(String s){
@@ -371,6 +732,7 @@ public class BiblioBaseDBMS {
             return false;
         }
     }
+
     
     public static void main(String[] args) {
         Tables = new ArrayList<>();
@@ -378,22 +740,49 @@ public class BiblioBaseDBMS {
 create table friends('name' string 'hobby' string 'birthdate' date 'age' float);
 insert into friends values ('Jane Kang','guitar','14-3-1989',25);
 insert into friends values ('Mr. Burns','lute','16-6-1900',114);
-insert into friends values ('King Soandso','clavicord','01-5-1877',42);
+insert into friends values ('King Soandso','clavicord','01-5-1877',114);
 insert into friends (name,hobby) values ('echo','guitar');
+select name, birthdate, hobby from friends where hobby = 'guitar';
 delete from friends;
 */
         Scanner sc = new Scanner(System.in);
         String s = new String();
-        while(true){
-            String temp = sc.nextLine();
-            if(temp.equals("")){
-                break;
+        boolean go = true;
+        boolean login = true;
+        while(go){
+            if(login){
+                System.out.print("Username: ");
+                String temp = sc.nextLine();
+                s+=temp;
+                //check for username, if invalid, message than break
+                login = false;
             }
-            s+=temp;
+            s = "";
+            while(true){
+                System.out.print("SQL> ");
+                String temp = sc.nextLine();
+                s+=temp;
+                if(temp.length() < 4 || 
+                        temp.substring(temp.length()-1).equals(";")){
+                    break;
+                }
+            }
+            if(s.length() >= 5 && 
+                    s.substring(s.length()-5).toUpperCase().equals("EXIT;")){
+                go = false;
+                System.out.println();
+            } 
+            else if(s.length() > 4){
+//                try{
+//                    parseString(s);
+//                }
+//                catch (Exception e){
+//                    System.out.println(e.getMessage());
+//                }
+                  parseString(s);
+            }
         }
-        
-        parseString(s);
-        displayTable(Tables.get(0));
+           
         sc.close();
     }
     

@@ -16,8 +16,6 @@ public class Table{
     private ArrayList<Attribute> attributes;
     private ArrayList<ArrayList<Field>> records;
     private Attribute primaryKey;
-    private int numAttributes;
-    private int numRecords;
     
     public Table(String name, ArrayList<Attribute> cols, 
             ArrayList<ArrayList<Field>> rows, Attribute primaryKey){
@@ -25,8 +23,6 @@ public class Table{
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
         setPrimaryKey(primaryKey);
-        this.numAttributes = cols.size();
-        this.numRecords = rows.size();
     }
     
     public Table(String name, ArrayList<Attribute> cols, Attribute primaryKey){
@@ -34,8 +30,6 @@ public class Table{
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>();
         setPrimaryKey(primaryKey);
-        this.numAttributes = cols.size();
-        this.numRecords = 0;
     }
     
     public Table(String name, ArrayList<Attribute> cols){
@@ -43,16 +37,12 @@ public class Table{
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>();
         setPrimaryKey();
-        this.numAttributes = cols.size();
-        this.numRecords = 0;
     }
     
     public Table(Table other){
         this.name = other.getName();
         this.attributes = new ArrayList<Attribute>(other.getAttributes());    //not deep------------------------
         setPrimaryKey(other.getPrimaryKey());
-        this.numAttributes = other.getNumAttributes();
-        this.numRecords = other.getNumRecords();
         this.records = other.getRecords();
     }
  
@@ -75,8 +65,17 @@ public class Table{
     }
     
     public boolean attInAttributes(Attribute col){
-        for(int i = 0; i < this.numAttributes; i++){
+        for(int i = 0; i < getNumAttributes(); i++){
             if(this.attributes.get(i).isEqual(col)){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean nameInAttributes(String name){
+        for (Attribute col : this.attributes) {
+            if (col.getName().equals(name)) {
                 return true;
             }
         }
@@ -93,16 +92,14 @@ public class Table{
     }
     
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
-        if(record.size() != this.numAttributes)
+        if(record.size() != getNumAttributes())
             throw new IllegalArgumentException("invalid record length");
         this.records.add(record);
-        this.numRecords++;
     }
     
     public void deleteRecord(int i){
         if(i < this.records.size() && i >= 0){  
             this.records.remove(i);
-            this.numRecords--;
         }
         else{
             throw new IllegalArgumentException("invalid record/index number");
@@ -110,11 +107,33 @@ public class Table{
     }
     
     public int getNumAttributes(){
-        return this.numAttributes;
+        return this.attributes.size();
+    }
+    
+    public ArrayList<Attribute> getAttributes(){
+        return this.attributes;
+    }
+    
+    public int getAttributeIdx(String col){
+        for(int i = 0; i < getNumAttributes(); i++){
+            if(col.equals(this.attributes.get(i).getName())){
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("attribute not found in table");
+    }
+    
+    public String getAttType(String name){
+        for (Attribute col : this.attributes) {
+            if (col.getName().equals(name)) {
+                return col.getType();
+            }
+        }
+        return null;
     }
     
     public int getNumRecords(){
-        return this.numRecords;
+        return this.records.size();
     }
     
     public ArrayList<Field> getRecord(int i){
@@ -126,19 +145,15 @@ public class Table{
         }
     }
     
+    public ArrayList<ArrayList<Field>> getRecords(){
+        return this.records;
+    }
+    
     public String getName(){
         if(this.name.isEmpty())
             throw new IllegalArgumentException("table has no name");
         else{
             return this.name;
         }
-    }
-    
-    public ArrayList<Attribute> getAttributes(){
-        return this.attributes;
-    }
-    
-    public ArrayList<ArrayList<Field>> getRecords(){
-        return this.records;
     }
 }
