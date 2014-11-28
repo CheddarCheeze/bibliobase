@@ -89,10 +89,108 @@ public class BiblioBaseDBMS {
                     } else {
                         throw new IllegalArgumentException("invalid SELECT command length");
                     }   break;
+                case "UPDATE":
+                    if(word.size() >= 6){
+                        updateCheck(word);
+                    } else {
+                        throw new IllegalArgumentException("invalid UPDATE command length");
+                    }   break;
                 case "EXIT":
                     break;
                 default:
                     throw new IllegalArgumentException("\"" + word.get(0) + "\"" + " is not a valid command");
+            }
+        }
+    }
+    
+    public static void updateCheck(ArrayList<String> word){
+        String tableName = new String();
+        String attName = new String();
+        String attType = new String();
+        int tI = 0;  //index for current table insertion will be occuring in
+        int wP = 0;  //keeps track of word place in command
+        ArrayList<ArrayList<Field>> records = Tables.get(tI).getRecords();
+        ArrayList<Attribute> columns = new ArrayList<>();
+        ArrayList<Field> values = new ArrayList<>();
+        ArrayList<Integer> colIdx = new ArrayList<>();
+        ArrayList<Integer> I = null;
+        
+        //check if second word is a command instead of a table name
+        wP++;
+        if(isCommand(word.get(wP))){
+            throw new IllegalArgumentException("command cannot be table name"); 
+        }else{  //search for table with name from Tables
+            tI = tableSearch(word.get(wP));
+        }
+        //check if third word is SET
+        wP++;
+        if(!word.get(wP).equals("SET")){
+            throw new IllegalArgumentException("\""+word.get(wP)+"\""
+                    + " is not SET");
+        }
+        //retrieve column names and values
+        wP++;
+        for(int i = wP; i < word.size(); i++){
+            Field f;
+            Attribute a;
+            
+            if(i % 3 == 0 && word.get(i).equals("WHERE")){
+                break;
+            }else if(word.get(i).equals("WHERE")){
+                throw new IllegalArgumentException("WHERE word is in "
+                        + " invalid position");
+            }
+            //conduct tests
+            if(i % 3 == 0 && !isValue(word.get(i))){
+                throw new IllegalArgumentException("\""+word.get(i)+"\""
+                 + " has to be a value, not a command or operator");
+            }
+            if(i % 3 == 0 && i+2 < word.size()){
+                String type = Tables.get(tI).getAttType(word.get(i));
+                int idx = Tables.get(tI).getAttributeIdx(word.get(i));
+                f = new Field(word.get(i+2));
+                a = new Attribute(word.get(i), type);
+                //check if equal sign is available
+                if(!word.get(i+1).equals("=")){
+                    throw new IllegalArgumentException("equal sign not present"
+                            + " in SET clause");
+                }
+                //check is column and value are same type
+                if(!isValue(word.get(i+2)) || !f.getType().equals(a.getType())){
+                    throw new IllegalArgumentException("column and value"
+                            + " types do no match in SET clause");
+                }
+                columns.add(a);
+                colIdx.add(idx);
+                values.add(f);
+            }else if(i % 3 == 0){
+                throw new IllegalArgumentException("SET column-value information"
+                        + " format is incorrect");
+            }
+            wP++;
+        }
+        //check if there is no where clause, if not use update all
+        if(wP == word.size()){
+            for(int i = records.size()-1; i > -1; i--){
+                for(int j = colIdx.size()-1; j > -1; j--){
+                    Tables.get(tI).updateRecord(i, colIdx.get(j), values.get(j));
+                }  
+            }
+            return; //exit function
+        }
+        //check if WHERE is next word
+        if(!word.get(wP).equals("WHERE")){
+            throw new IllegalArgumentException("The WHERE clause is not in "
+                    + "the correct location");
+        }else{
+            wP++;
+            I = where(word, tI, wP);
+            for(int i = 0; i < I.size(); i++){
+                int row = I.get(i);
+                for(int j = 0; j < colIdx.size(); j++){
+                    int col = colIdx.get(j);
+                    Tables.get(tI).updateRecord(row, col, values.get(j));
+                }
             }
         }
     }
@@ -164,7 +262,7 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("word should be WHERE"); 
         }else{  //display selected values
             wP++;
-            I = where(word, tI, wP, "SELECT");
+            I = where(word, tI, wP);
             String a;
             int idx = 0;
             //display columns
@@ -224,7 +322,7 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("invalid command \""+
                     word.get(3)+"\"");
         }else{
-            I = where(word, tI, 4, "DELETE");
+            I = where(word, tI, 4);
             for(int k = I.size()-1; k > -1; k--){
                 Tables.get(tI).deleteRecord(I.get(k));
             }
@@ -346,8 +444,7 @@ public class BiblioBaseDBMS {
     }
     
     public static ArrayList<Integer> where(ArrayList<String> word, int tI, 
-            int wP, String c){
-        //-------------------------------UNDER_CONSTRUCTION-----------------------------------------
+            int wP){
         //handles multiple operations and returns concatenated fields
         int place = 1;
         int attIdx = 0;
@@ -462,18 +559,10 @@ public class BiblioBaseDBMS {
         records = Tables.get(tI).getRecords();
         OR(tI, set, tok);
         
-        //command operations
-        if(c.equals("DELETE")){
-            I = new ArrayList(set); 
-            Collections.sort(I);    //mergesort list of row indexes
-            return I;
-        }
-        else if(c.equals("SELECT")){
-            I = new ArrayList(set); 
-            Collections.sort(I);    //mergesort list of row indexes
-            return I;
-        }
-        throw new IllegalArgumentException("WHERE cannot operate over "+c);
+        //return list of sorted row indexes
+        I = new ArrayList(set); 
+        Collections.sort(I);    //mergesort list of row indexes
+        return I;
     }
     
     public static void insertCheck(ArrayList<String> word){
@@ -733,6 +822,9 @@ public class BiblioBaseDBMS {
         }
     }
 
+    public static boolean isValue(String s){
+        return !(isCommand(s)||isOperator(s)||isLogicOp(s));
+    }
     
     public static void main(String[] args) {
         Tables = new ArrayList<>();

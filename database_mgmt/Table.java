@@ -91,6 +91,17 @@ public class Table{
         return false;
     }
     
+    public void updateRecord(int row, int col, Field value){
+        if( (row > -1 && row < this.getNumRecords()) &&
+                (col > -1 && col < this.getNumAttributes()) &&
+                (value.getType().equals(this.records.get(row).get(col).getType())) ){
+            this.records.get(row).get(col).setField(value);
+        }
+        else{
+            throw new IllegalArgumentException("invalid field value in update");
+        }
+    }
+    
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
         if(record.size() != getNumAttributes())
             throw new IllegalArgumentException("invalid record length");
