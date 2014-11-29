@@ -55,7 +55,7 @@ public class Table{
             this.primaryKey = primaryKey;
         }
         else{
-            throw new IllegalArgumentException("primary key is invalid");
+            throw new IllegalArgumentException("ERROR: primary key is invalid");
         }
         //code for finding if it actually is a candidate key
     }
@@ -98,13 +98,13 @@ public class Table{
             this.records.get(row).get(col).setField(value);
         }
         else{
-            throw new IllegalArgumentException("invalid field value in update");
+            throw new IllegalArgumentException("ERROR: invalid field value in update");
         }
     }
     
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
         if(record.size() != getNumAttributes())
-            throw new IllegalArgumentException("invalid record length");
+            throw new IllegalArgumentException("ERROR: invalid record length");
         this.records.add(record);
     }
     
@@ -113,7 +113,7 @@ public class Table{
             this.records.remove(i);
         }
         else{
-            throw new IllegalArgumentException("invalid record/index number");
+            throw new IllegalArgumentException("ERROR: invalid record/index number");
         }
     }
     
@@ -131,7 +131,7 @@ public class Table{
                 return i;
             }
         }
-        throw new IllegalArgumentException("attribute not found in table");
+        throw new IllegalArgumentException("ERROR: attribute not found in table");
     }
     
     public String getAttType(String name){
@@ -152,7 +152,7 @@ public class Table{
             return this.records.get(i);
         }
         else{
-            throw new IllegalArgumentException("invalid record index number");
+            throw new IllegalArgumentException("ERROR: invalid record index number");
         }
     }
     
@@ -162,7 +162,7 @@ public class Table{
     
     public String getName(){
         if(this.name.isEmpty())
-            throw new IllegalArgumentException("table has no name");
+            throw new IllegalArgumentException("ERROR: table has no name");
         else{
             return this.name;
         }

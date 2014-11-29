@@ -25,26 +25,20 @@ public class Date{
     public Date(String date){
         String[] nums = date.split("[-]");
         boolean isDate = true;
-        if(nums.length == 3){
+        if(this.checkIfDate(date)){
             for(int i = 0; i < nums.length; i++){
                 if(isInt(nums[i])){
                     int temp = Integer.parseInt(nums[i]);
-                    if(i == 0 && (temp < 1 || temp > 31))
-                        isDate = false;
-                    else
+                    if(i == 0 && (temp > 0 && temp < 32))
                         this.day = temp;
-                    if(i == 1 && (temp < 1 || temp > 12))
-                        isDate = false;
-                    else
+                    if(i == 1 && (temp > 0 && temp < 13))
                         this.month = temp;
-                    if(i == 2 && (temp < 0 || temp > 9999))
-                        isDate = false;
-                    else
+                    if(i == 2 && (temp >= 0 && temp <= 9999))
                         this.year = temp;
                 }
             }
         }else{
-            throw new IllegalArgumentException("attempted conversion of invalid string to date");
+            throw new IllegalArgumentException("ERROR: attempted conversion of invalid string to date");
         }
     }
     
@@ -56,7 +50,7 @@ public class Date{
             return "0" + day + "-" + month + "-" + year;
         }
         else if(day > 10 && month < 10){
-            return day + "-" + "-0" + month + "-" + year;
+            return day + "-0" + month + "-" + year;
         }
         else{
             return day + "-" + month + "-" + year;

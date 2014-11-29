@@ -48,13 +48,13 @@ public class Field{
             this.type = "STRING";
         }
         else{
-            throw new IllegalArgumentException("Invalid type for Field");
+            throw new IllegalArgumentException("ERROR: Invalid type for Field");
         }
     }
     
     public void setField(String value){
         if(value.equals("NULL")){
-            throw new IllegalArgumentException("this Field method does not accept null as argument");
+            throw new IllegalArgumentException("ERROR: this Field method does not accept null as argument");
         }
         else if(Date.checkIfDate(value)){
             this.value = value;
@@ -69,7 +69,7 @@ public class Field{
             this.type = "STRING";
         }
         else{
-            throw new IllegalArgumentException("Invalid type for Field");
+            throw new IllegalArgumentException("ERROR: Invalid type for Field");
         }
     }
     
@@ -98,7 +98,7 @@ public class Field{
             this.value = value;
         }
         else{
-            throw new IllegalArgumentException("Invalid type for Field");
+            throw new IllegalArgumentException("ERROR: Invalid type for Field");
         }
     }
     
@@ -157,7 +157,6 @@ public class Field{
         else if( this.type.equals("DATE") ){
             Date dO = new Date(f.getValue());
             Date d = new Date(this.value);
-            System.out.println("Date: "+this.value);
             if(d.compareDates(dO, operator)){
                 return true;
             }
