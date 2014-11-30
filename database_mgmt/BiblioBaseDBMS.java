@@ -4,7 +4,6 @@
 
 package database_mgmt;
 
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,26 +13,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class BiblioBaseDBMS {
 
-    public static ArrayList<Table> TABLES;
-    public static String USERNAME;
+    static ArrayList<Table> TABLES;
+    static String USERNAME;
+    static boolean MAXLOGIN;
     
-    public static void getFile(){
+    static void getFile(){
         String s = new String();
         Scanner inputF;
         InputStream in = BiblioBaseDBMS.class.getResourceAsStream("tables.txt");
         inputF = new Scanner(in);
         
         while(inputF.hasNextLine())
-            s = inputF.nextLine();
+            s += inputF.nextLine();
         
         System.out.println(s);
         inputF.close();
     }
     
-    public static void parseString(String str){
+    static void parseString(String str){
         ArrayList<ArrayList<String>> words= new ArrayList<>();
         str = str.toUpperCase();
         String[] command = str.split("[;]");
@@ -119,7 +120,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    public static void updateCheck(ArrayList<String> word){
+    static void updateCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -211,7 +212,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    public static void selectCheck(ArrayList<String> word){
+    static void selectCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -219,6 +220,7 @@ public class BiblioBaseDBMS {
         int wP = 0;  //keeps track of word place in command
         ArrayList<String> colNames = null;
         ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
+        ArrayList<Attribute> columns = null;
         ArrayList<Integer> colIdx = null;
         ArrayList<Integer> I = null;
         boolean selectAll = false;
@@ -268,7 +270,7 @@ public class BiblioBaseDBMS {
             displayTable(TABLES.get(tI));   //execute basic select display
             return;
         }
-        //get column indexes
+        //get column indexes and names if user is selecting all columns
         if(selectAll){
             colIdx = new ArrayList<>();
             colNames = new ArrayList<String>();
@@ -276,7 +278,7 @@ public class BiblioBaseDBMS {
                 colIdx.add(i);
                 colNames.add(TABLES.get(tI).getAttributes().get(i).getName());
             }
-        }else{
+        }else{  //or else get specified columns
             colIdx = new ArrayList<>();
             for(String col : colNames){
                 colIdx.add(TABLES.get(tI).getAttributeIdx(col));
@@ -291,7 +293,6 @@ public class BiblioBaseDBMS {
             String a;
             int idx = 0;
             //display columns
-            System.out.println();
             for(int i = 0; i < colNames.size(); i++){
                 a = colNames.get(i);
                 System.out.format("%-12s",a);
@@ -313,11 +314,10 @@ public class BiblioBaseDBMS {
                 }
                 System.out.println();
             }
-            System.out.println();
         }
     }
     
-    public static void deleteCheck(ArrayList<String> word){
+    static void deleteCheck(ArrayList<String> word){
         String tableName = new String();
         int tI = 0;  //index for current table insertion will be occuring in
         ArrayList<Integer> I = null;
@@ -354,7 +354,7 @@ public class BiblioBaseDBMS {
         
     }
     
-    public static Set<Integer> operateOnRecords(int tI, List<String> tok, 
+    static Set<Integer> operateOnRecords(int tI, List<String> tok, 
             ArrayList<ArrayList<Field>> records){
         //initialize variables
         Set<Integer> I = new HashSet<Integer>();
@@ -422,7 +422,7 @@ public class BiblioBaseDBMS {
         return I;
     }
     
-    public static void AND(ArrayList<String> word, int w, int tI, 
+    static void AND(ArrayList<String> word, int w, int tI, 
             Set<Integer> s, boolean reParse){
         //initialize variables
         Set<Integer> set1 = new HashSet<Integer>();
@@ -451,7 +451,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    public static void OR(int tI, Set<Integer> s, ArrayList<String> tok){
+    static void OR(int tI, Set<Integer> s, ArrayList<String> tok){
         //initialize variables
         Set<Integer> set = new HashSet<>(); 
         ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
@@ -467,7 +467,7 @@ public class BiblioBaseDBMS {
         s.addAll(set);
     }
     
-    public static ArrayList<Integer> where(ArrayList<String> word, int tI, 
+    static ArrayList<Integer> where(ArrayList<String> word, int tI, 
             int wP){
         //handles multiple operations and returns concatenated fields
         int place = 1;
@@ -589,7 +589,7 @@ public class BiblioBaseDBMS {
         return I;
     }
     
-    public static void insertCheck(ArrayList<String> word){
+    static void insertCheck(ArrayList<String> word){
         String attName = new String();
         String attType = new String();
         String tableName = new String();
@@ -736,7 +736,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    public static void createCheck(ArrayList<String> word){
+    static void createCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -784,7 +784,7 @@ public class BiblioBaseDBMS {
         TABLES.add(new Table(tableName, columns));
     }
     
-    public static int tableSearch(String tableName){
+    static int tableSearch(String tableName){
         //------------update at a later time for a binary search over sorted names------------------
         boolean found = false;
         int tI = 0; //index for table
@@ -800,44 +800,72 @@ public class BiblioBaseDBMS {
         return tI;
     }
     
-    public static void displayTable(Table table){
+    static void displayTable(Table table){
         Attribute a;
-        System.out.println("\nTable name: "+table.getName());
-        for(int i = 0; i < table.getNumAttributes(); i++){
-            a = table.getAttributes().get(i);
-            System.out.format("%-12s",a.getName());
-            if(i != table.getNumAttributes()-1)
-                System.out.format("%-9s","|");
-        }
-        System.out.println();
-        for(int i = 0; i < table.getNumAttributes(); i++){
-            System.out.print("-----------------");
-        }
-        System.out.println();
-        for(int r = 0; r < table.getNumRecords(); r++){
-            for(int c = 0; c < table.getNumAttributes(); c++){
-                ArrayList<Field> f = table.getRecord(r);
-                System.out.format("%-21s",f.get(c).getValue());
+        
+        if(MAXLOGIN){
+            System.out.println("Table name: "+table.getName());
+            for(int i = 0; i < table.getNumAttributes(); i++){
+                a = table.getAttributes().get(i);
+                System.out.format("%-12s",a.getName());
+                if(i != table.getNumAttributes()-1)
+                    System.out.format("%-9s","|");
             }
             System.out.println();
+            for(int i = 0; i < table.getNumAttributes(); i++){
+                System.out.print("-----------------");
+            }
+            System.out.println();
+            for(int r = 0; r < table.getNumRecords(); r++){
+                for(int c = 0; c < table.getNumAttributes(); c++){
+                    ArrayList<Field> f = table.getRecord(r);
+                    System.out.format("%-21s",f.get(c).getValue());
+                }
+                System.out.println();
+            }
+        }else{
+            //print table name
+            System.out.print("<"+table.getName()+">");
+            //print attribute names
+            System.out.print("[");
+            for(int i = 0; i < table.getNumAttributes(); i++){
+                a = table.getAttributes().get(i);
+                System.out.print(a.getName());
+                if(i != table.getNumAttributes()-1){
+                    System.out.print(",");
+                }
+            }
+            System.out.print("]");
+            //print values
+            for(int r = 0; r < table.getNumRecords(); r++){
+                System.out.print("(");
+                for(int c = 0; c < table.getNumAttributes(); c++){
+                    ArrayList<Field> f = table.getRecord(r);
+                    System.out.print(f.get(c).getValue());
+                    if(c != table.getNumAttributes()-1){
+                        System.out.print(",");
+                    }
+                }
+                System.out.print(")");
+            }
         }
         System.out.println();
     }
     
-    public static boolean isCommand(String str){
+    static boolean isCommand(String str){
         return str.matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK");
     }
     
-    public static boolean isOperator(String str){
+    static boolean isOperator(String str){
         return str.matches("[/*+-=<>]|<=|>=|!=");
     }
     
-    public static boolean isLogicOp(String str){
+    static boolean isLogicOp(String str){
         return str.matches("OR|AND");
     }
     
-    public static boolean isFloat(String s){
+    static boolean isFloat(String s){
         try {
             Float.parseFloat(s);
             return true;
@@ -845,9 +873,25 @@ public class BiblioBaseDBMS {
             return false;
         }
     }
-
-    public static boolean isValue(String s){
+    
+    static boolean isValue(String s){
         return !(isCommand(s)||isOperator(s)||isLogicOp(s));
+    }
+    
+    static boolean login(String usr){
+        //------------------------UNDER_CONSTRUCTION----------------------------------
+        if(usr.length() > 1 && usr.substring(0, 1).equals("-")){
+            //check if username is in database
+            USERNAME = usr.substring(1, usr.length());
+            MAXLOGIN = true;
+            return true;
+        }else if(usr.length() > 0){
+            //check if username is in database
+            USERNAME = usr;
+            MAXLOGIN = false;
+            return true;
+        }
+        return false;
     }
     
     public static void main(String[] args) {
@@ -864,34 +908,45 @@ select * from friends;
 select name, birthdate, hobby from friends where hobby = 'guitar';
 delete from friends;
 */
-        getFile();
-        Scanner sc = new Scanner(System.in);
+        InputStream is = System.in;
+        Scanner sc = new Scanner(is);
         String s = new String();
         boolean go = true;
-        boolean login = true;
+        boolean login = false;
         while(go){
-            if(login){
+            //login to account
+            if(!login){
                 System.out.print("Username: ");
-                USERNAME = sc.nextLine();
+                String usr = sc.nextLine();
+                //exit program if user inputs exit
+                if(usr.matches("exit|exit;"))
+                    break;
                 //check for username, if invalid, message than break
-                login = false;
+                login = login(usr);
+                if(!login){
+                    System.out.println("user was not found");
+                    continue;
+                }
             }
+            //get input
             s = "";
-            //System.out.print("SQL> ");
+            System.out.print("SQL> ");
             while(true){
-                String temp = sc.nextLine();
+                String temp = sc.useDelimiter(Pattern.compile("\\z")).next();
+                temp = temp.replaceAll("(\\r|\\n)", "");
                 s+=temp;
-                if(temp.length() < 4 || 
+                if(temp.length() != 0 && 
                         temp.substring(temp.length()-1).equals(";")){
                     break;
                 }
             }
+            System.out.println();
+            //exit or do commands
             if(s.length() >= 5 && 
                     s.substring(s.length()-5).toUpperCase().equals("EXIT;")){
                 go = false;
-                System.out.println();
             } 
-            else if(s.length() > 4){
+            else{
                 try{
                     parseString(s);
                 }

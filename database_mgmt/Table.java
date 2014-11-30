@@ -25,6 +25,14 @@ public class Table{
         setPrimaryKey(primaryKey);
     }
     
+    public Table(String name, ArrayList<Attribute> cols, 
+            ArrayList<ArrayList<Field>> rows){
+        this.name = name;
+        this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
+        this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
+        setPrimaryKey();
+    }
+    
     public Table(String name, ArrayList<Attribute> cols, Attribute primaryKey){
         this.name = name;
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
@@ -132,6 +140,23 @@ public class Table{
             }
         }
         throw new IllegalArgumentException("ERROR: attribute not found in table");
+    }
+    
+    public Attribute getAttribute(String col){
+        for(int i = 0; i < getNumAttributes(); i++){
+            if(col.equals(this.attributes.get(i).getName())){
+                return this.attributes.get(i);
+            }
+        }
+        throw new IllegalArgumentException("ERROR: attribute not found in table");
+    }
+    
+    public Attribute getAttribute(int idx){
+        if(idx > -1 && idx < this.getNumAttributes()){
+            return this.attributes.get(idx);
+        }else{
+            throw new IllegalArgumentException("ERROR: program tried to get an attribute with an invalid index number");
+        }
     }
     
     public String getAttType(String name){
