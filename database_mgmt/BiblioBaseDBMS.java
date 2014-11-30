@@ -28,7 +28,7 @@ public class BiblioBaseDBMS {
         inputF = new Scanner(in);
         
         while(inputF.hasNextLine())
-            s += inputF.nextLine();
+            s = inputF.nextLine();
         
         System.out.println(s);
         inputF.close();
@@ -212,7 +212,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    static void selectCheck(ArrayList<String> word){
+        static void selectCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -270,51 +270,51 @@ public class BiblioBaseDBMS {
             displayTable(TABLES.get(tI));   //execute basic select display
             return;
         }
-        //get column indexes and names if user is selecting all columns
+        //get attributes and attribute indexes
         if(selectAll){
-            colIdx = new ArrayList<>();
-            colNames = new ArrayList<String>();
-            for(int i = 0; i < TABLES.get(tI).getAttributes().size(); i++){
-                colIdx.add(i);
-                colNames.add(TABLES.get(tI).getAttributes().get(i).getName());
-            }
-        }else{  //or else get specified columns
-            colIdx = new ArrayList<>();
+            columns = TABLES.get(tI).getAttributes();
+        }else{
+            columns = new ArrayList<Attribute>();
+            colIdx = new ArrayList<Integer>();
             for(String col : colNames){
+                columns.add(TABLES.get(tI).getAttribute(col));
                 colIdx.add(TABLES.get(tI).getAttributeIdx(col));
             }
-        }
-        //check if the next word is WHERE
+        }      
+        //check if the next word is not WHERE
+        ArrayList<ArrayList<Field>> recordsCrop = new ArrayList<>();
+        Table t = null;
         if(!word.get(wP).equals("WHERE")){
-            throw new IllegalArgumentException("ERROR: word should be WHERE"); 
-        }else{  //display selected values
-            wP++;
+            throw new IllegalArgumentException("ERROR: word should be WHERE");
+        }
+        //create tables
+        wP++;
+        if(!selectAll){  //if user selected all columns
             I = where(word, tI, wP);
             String a;
-            int idx = 0;
-            //display columns
-            for(int i = 0; i < colNames.size(); i++){
-                a = colNames.get(i);
-                System.out.format("%-12s",a);
-                if(i != colNames.size()-1)
-                    System.out.format("%-9s","|");
-            }
-            System.out.println();
-            //display seperator line
-            for(int i = 0; i < colNames.size(); i++){
-                System.out.print("-----------------");
-            }
-            //display values
-            System.out.println();
+            ArrayList<Field> record = null;
+            //get records
             for(int i = 0; i < I.size(); i++){
                 int row = I.get(i);
+                record = new ArrayList<>();
                 for(int j = 0; j < colIdx.size(); j++){
-                    String f = records.get(row).get(j).getValue();
-                    System.out.format("%-21s", f);
+                    record.add(records.get(row).get(colIdx.get(j)));
                 }
-                System.out.println();
+                recordsCrop.add(record);
             }
+            //create table 
+            t = new Table(TABLES.get(tI).getName(), columns, recordsCrop);
+        }else{
+            //get records
+            I = where(word, tI, wP);
+            for(int i = 0; i < I.size(); i++){
+                int idx = I.get(i);
+                recordsCrop.add(records.get(idx));
+            }
+            //create table
+            t = new Table(TABLES.get(tI).getName(), columns, recordsCrop);
         }
+        displayTable(t);
     }
     
     static void deleteCheck(ArrayList<String> word){
@@ -953,7 +953,7 @@ delete from friends;
                 catch (Exception e){
                     System.out.println(e.getMessage());
                 }
-                 //parseString(s);
+                //parseString(s);
             }
         }
            
