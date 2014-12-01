@@ -1,2 +1,2 @@
-Magazine Author Title ( "A Beautiful World" "John Smith" | "Scary Dark Oceans" "Poc A. Hontas" )
-Books ISBN Author Title ( 1515 "J. K. Rowling" "Harry Potter and the Goblet of Fire" | 9999 "George Orwell" "1984" )
+Magazine Author string Title string ( "A Beautiful World" "John Smith" | "Scary Dark Oceans" "Poc A. Hontas" )
+Books ISBN string Author string Title string ( 1515 "J. K. Rowling" "Harry Potter and the Goblet of Fire" | 9999 "George Orwell" "1984" )
