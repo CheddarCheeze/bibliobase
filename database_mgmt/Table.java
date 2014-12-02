@@ -50,6 +50,13 @@ public class Table{
         return false;
     }
     
+    public void insertAttribute(String name, String type){
+        this.attributes.add(new Attribute(name, type));
+        for(ArrayList<Field> rec : this.records){
+            rec.add(new Field(null, type));
+        } 
+    }
+    
     public boolean typeInAttributes(String type, ArrayList<Attribute> cols){
         for (Attribute col : cols) {
             if (col.getType().equals(type)) {

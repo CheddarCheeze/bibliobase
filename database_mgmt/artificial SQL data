@@ -1,0 +1,35 @@
+create table friends('name' string 'hobby' string 'birthdate' date 'age' float);
+insert into friends values ('Jane H. Kang','guitar','14-3-1989',25);
+insert into friends values ('Mr. Burns','lute','16-6-1900',114);
+insert into friends values ('King Soandso','clavicord','01-5-1877',114);
+insert into friends (name,hobby) values ('echo','guitar');
+
+create table Book ('title' string,'author' string,'genre' string,'ISBN' float,'avail' string);
+insert into Book values ('Harry Potter 1','J. K. Rowling','Fantasy','00000001','True');
+insert into Book values ('Harry Potter 2','J. K. Rowling','Fantasy','00000002','True');
+insert into Book values ('Harry Potter 3','J. K. Rowling','Fantasy','00000003','False');
+insert into Book values ('Hitchhiker's Guide to the Galaxy','Douglas Adams','Sci-fi','00000004','False');
+create table DVD ('title' string,'director' string,'genre' string,'ISBN' float,'avail' string);
+insert into DVD values ('2001: A Space Odyssey','Stanley Kubrick','Sci-fi','00000011','True');
+insert into DVD values ('Inception','Christopher Nolan','Sci-fi','00000012','False');
+insert into DVD values ('The Thing','John Carpenter','Horror','00000013','False');
+insert into DVD values ('The Rocky Horror Picture Show','Jim Sharman','Musical','00000014','True');
+insert into DVD values ('Coffee and Cigarettes','Jim Jarmusch','Misc.','00000014','True');
+
+select * from friends;
+update friends set hobby = 'dancing' where hobby = 'lute';
+select * from friends;
+delete from friends where hobby = clavicord;
+select * from friends;
+select name, birthdate, hobby from friends where hobby = 'guitar';
+delete from friends;
+drop table friends;
+
+select * from Book;
+select author from Book where avail = 'True';
+update Book set avail = 'False' where title = 'Harry Potter 1';
+select * from Book;
+delete from Book where author = 'J. K. Rowling' and avail = 'True';
+update Book set avail = 'True';
+select * from Book;
+select * from DVD;

@@ -16,19 +16,17 @@ public class filesystem
 		File folder = new File("databases");
 		if(!folder.exists())
 		{
-			if(folder.mkdir())
-				System.out.println("Database directory created.\n");
-			else
-				System.out.println("Directory failed to create.\n");
+			if(!folder.mkdir())
+				throw new IllegalArgumentException("Could not create databases directory");
 		}
 		
-		File dbfile = new File(dbname+".txt");
+		File dbfile = new File("databases/"+dbname+".txt");
+                if(dbfile.exists())
+                    return false;
 		try{
 			dbfile.createNewFile();
-			System.out.println("Database created");
 			return true;
 		}catch(IOException x){
-			System.out.println("Database already exists.");
 			return false;
 		}
 	}

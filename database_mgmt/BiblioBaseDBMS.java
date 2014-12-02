@@ -129,7 +129,8 @@ public class BiblioBaseDBMS {
     
     static void alterCheck(ArrayList<String> word){
         String w;
-        int tI;
+        String tableName = null;
+        int tI = -1;
         
         //check is second word is "TABLE"
         w = word.get(1);
@@ -140,6 +141,8 @@ public class BiblioBaseDBMS {
         w = word.get(2);
         if(!isValue(w)){
             throw new IllegalArgumentException("ERROR: 3rd word should not be a command or operator for ALTER command");
+        }else if(word.get(3).equals("RENAME") && word.get(4).equals("TO")){
+            tableName = w;
         }else{
             tI = tableSearch(w);
         }
@@ -162,10 +165,14 @@ public class BiblioBaseDBMS {
             }
             w = word.get(4);
             if(w.equals("COLUMN")){
-                TABLES.get(tI).insertAttribute(word.get(5));
+                if(!isValue(word.get(5)) || !isValue(word.get(6))){
+                    throw new IllegalArgumentException("ERROR: last two words are not values for ALTER RENAME COLUMN");
+                }
+                tI = tableSearch(tableName);
+                TABLES.get(tI).insertAttribute(word.get(5), word.get(6));
                 return;
             }else if(w.equals("TO")){
-                if(!filesystem.renameTable(word.get(5))){
+                if(!filesystem.renameTable(tableName, word.get(5), DATABASE_NAME)){
                     throw new IllegalArgumentException("ERROR: another table already has that name");
                 }
                 TABLES.get(tI).setTableName(word.get(5));
@@ -860,8 +867,8 @@ public class BiblioBaseDBMS {
         tableName = w;
         //check if we're creating a database
         if(word.size() == 3 && database){
-            if(!filesystem.createDb(DATABASE_NAME)){
-                throw new IllegalArgumentException("ERROR: cannot drop non-existant database");
+            if(!filesystem.createDb(word.get(2))){
+                throw new IllegalArgumentException("ERROR: database already exists");
             }
             return;
         }else if(word.size() == 3){
@@ -897,18 +904,23 @@ public class BiblioBaseDBMS {
     }
     
     static int tableSearch(String tableName){
-        //------------update at a later time for a binary search over sorted names------------------
-        boolean found = false;
+        boolean foundInMemory = false;
         int tI = 0; //index for table
-            for(int i = 0; i < TABLES.size() && !found; i++){
+            for(int i = 0; i < TABLES.size() && !foundInMemory; i++){
                 if(TABLES.get(i).getName().toUpperCase().equals(tableName.toUpperCase())){
-                    found = true;
+                    foundInMemory = true;
                     tI = i;
                 }
             }
-            if(!found){
-                throw new IllegalArgumentException("ERROR: table name was not found");
+        if(!foundInMemory){
+            Table t = filesystem.getTable(tableName, DATABASE_NAME);
+            if(t!= null){
+                TABLES.add(t);
+                tI = TABLES.size()-1;
+            }else{
+                throw new IllegalArgumentException("ERROR: table was not found");
             }
+        }
         return tI;
     }
     
@@ -961,7 +973,8 @@ public class BiblioBaseDBMS {
     
     static boolean isCommand(String str){
         return str.toUpperCase().matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
-                + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK");
+                + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
+                + "TRUNCATE|DATABASE");
     }
     
     static boolean isOperator(String str){
@@ -1005,28 +1018,15 @@ public class BiblioBaseDBMS {
         return false;
     }
     
+    static void storeTables(){
+        for(Table t : TABLES){
+            filesystem.modifyTable(t, DATABASE_NAME);
+        }
+    }
+    
     public static void main(String[] args) {
         TABLES = new ArrayList<>();
-/*----artificial data--------       
-create table friends('name' string 'hobby' string 'birthdate' date 'age' float);
-insert into friends values ('Jane H. Kang','guitar','14-3-1989',25);
-insert into friends values ('Mr. Burns','lute','16-6-1900',114);
-insert into friends values ('King Soandso','clavicord','01-5-1877',114);
-insert into friends (name,hobby) values ('echo','guitar');
-select * from friends;
-update friends set hobby = 'dancing' where hobby = 'lute';
-select * from friends;
-delete from friends where hobby = clavicord;
-select * from friends;
-select name, birthdate, hobby from friends where hobby = 'guitar';
-delete from friends;
-drop table friends;
 
-create table Book ('title' string,'author' string,'genre' string,'ISBN' float,'avail' string);
-insert into Book values ('Harry Potter 1','J. K. Rowling','Fantasy','00000001','True');
-insert into Book values ('Harry Potter 2','J. K. Rowling','Fantasy','00000002','True');
-select * from Book;
-*/
         InputStream is = System.in;
         Scanner sc = new Scanner(is);
         String s = new String();
@@ -1066,25 +1066,24 @@ select * from Book;
                         break;
                     }
                 }
-                System.out.println();
                 //exit or do commands
                 if(s.length() >= 5 && 
                         s.substring(s.length()-5).toUpperCase().equals("EXIT;")){
                     go = false;
                 } 
                 else{
-//                    try{
-//                        parseString(s);
-//                    }
-//                    catch (Exception e){
-//                        System.out.println(e.getMessage());
-//                    }
-                    parseString(s);
+                    try{
+                        parseString(s);
+                    }
+                    catch (Exception e){
+                        System.out.println(e.getMessage());
+                    }
+                    //parseString(s);
                 }
             }
             sc.close();
         }
-        
+        storeTables();
     }
     
 }
