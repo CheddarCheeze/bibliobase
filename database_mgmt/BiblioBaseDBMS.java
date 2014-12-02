@@ -4,6 +4,8 @@
 
 package database_mgmt;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,28 +20,14 @@ import java.util.regex.Pattern;
 public class BiblioBaseDBMS {
 
     static ArrayList<Table> TABLES;
-    static String USERNAME;
-    static boolean MAXLOGIN;
-    
-    static void getFile(){
-        String s = new String();
-        Scanner inputF;
-        InputStream in = BiblioBaseDBMS.class.getResourceAsStream("tables.txt");
-        inputF = new Scanner(in);
-        
-        while(inputF.hasNextLine())
-            s = inputF.nextLine();
-        
-        System.out.println(s);
-        inputF.close();
-    }
+    static String DATABASE_NAME;
+    static boolean MAX_LOGIN;
     
     static void parseString(String str){
         ArrayList<ArrayList<String>> words= new ArrayList<>();
-        str = str.toUpperCase();
-        String[] command = str.split("[;]");
-        for(int i = 0; i < command.length; i++){
-            String[] temp = command[i].split("[ ,]|"
+        String[] commandUp = str.split("[;]");
+        for(int i = 0; i < commandUp.length; i++){
+            String[] temp = commandUp[i].split("[ ,]|"
                     + "((?<=\\()|(?=\\()|(?<=\\))|(?=\\)))");
             if(temp.length < 1){
                 throw new IllegalArgumentException("ERROR: empty command sent to parser");
@@ -69,6 +57,13 @@ public class BiblioBaseDBMS {
                     j--;
                     quotePlace = -1;
                 }
+                else if(quotePlace != -1){
+                    s2 = words.get(i).get(quotePlace);
+                    s = s2+" "+s;
+                    words.get(i).set(quotePlace, s);
+                    words.get(i).remove(j);
+                    j--;
+                }
             }
             if(quotePlace != -1){
                 throw new IllegalArgumentException("ERROR: a quote was not closed");
@@ -78,10 +73,10 @@ public class BiblioBaseDBMS {
             if(word.size() < 1){
                 throw new IllegalArgumentException("ERROR: empty command sent to parser --2");
             }
-            switch (word.get(0)){
+            switch (word.get(0).toUpperCase()){
                 case "CREATE":
                     //if there are an odd # of tokens and size is >= 7
-                    if((word.size() & 1) == 1 && word.size() >= 7){
+                    if((word.size() & 1) == 1 && word.size() >= 3){
                         createCheck(word);
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid CREATE command length");
@@ -112,11 +107,110 @@ public class BiblioBaseDBMS {
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid UPDATE command length");
                     }   break;
+                case "DROP":
+                    if(word.size() == 3){
+                        dropCheck(word);
+                    } else {
+                        throw new IllegalArgumentException("ERROR: invalid DROP command length");
+                    }   break;
+                case "ALTER":
+                    if(word.size() >= 5){
+                        alterCheck(word);
+                    } else {
+                        throw new IllegalArgumentException("ERROR: invalid ALTER command length");
+                    }
                 case "EXIT":
                     break;
                 default:
                     throw new IllegalArgumentException("\"" + word.get(0) + "\"" + " is not a valid command");
             }
+        }
+    }
+    
+    static void alterCheck(ArrayList<String> word){
+        String w;
+        int tI;
+        
+        //check is second word is "TABLE"
+        w = word.get(1);
+        if(!w.equals("TABLE")){
+            throw new IllegalArgumentException("ERROR: 2nd word should be \'TABLE\' for ALTER command");
+        }
+        //check if second word is not a value, in which case store table index
+        w = word.get(2);
+        if(!isValue(w)){
+            throw new IllegalArgumentException("ERROR: 3rd word should not be a command or operator for ALTER command");
+        }else{
+            tI = tableSearch(w);
+        }
+        //Check for DROP behavior and act
+        w = word.get(3);
+        if(w.equals("DROP")){
+            if(word.size() != 5){
+                throw new IllegalArgumentException("ERROR: too many words for DROP column in ALTER command");
+            }
+            w = word.get(4);
+            if(isValue(w)){
+                TABLES.get(tI).deleteAttribute(w);
+            }
+            return;
+        }
+        //Check for RENAME behavior and set
+        if(w.equals("RENAME")){
+            if(word.size() != 6){
+                throw new IllegalArgumentException("ERROR: too many words for RENAME column in ALTER command");
+            }
+            w = word.get(4);
+            if(w.equals("COLUMN")){
+                TABLES.get(tI).insertAttribute(word.get(5));
+                return;
+            }else if(w.equals("TO")){
+                if(!filesystem.renameTable(word.get(5))){
+                    throw new IllegalArgumentException("ERROR: another table already has that name");
+                }
+                TABLES.get(tI).setTableName(word.get(5));
+                return;
+            }else{
+                throw new IllegalArgumentException("ERROR: 5th word should be TO or COLUMN in ALTER command or command size too small");
+            }
+        }else if(w.equals("ADD")){
+            DO STUFF
+        }else{
+            throw new IllegalArgumentException("ERROR: 4th word should be DROP, RENAME, or ADD in ALTER command");
+        }
+        
+        
+    }
+    
+    static void dropCheck(ArrayList<String> word){
+        boolean dataBase;
+        String w;
+        int tI;
+        
+        //checks if second word is TABLE or DATABASE
+        w = word.get(1).toUpperCase();
+        if(w.equals("TABLE")){
+            dataBase = false;
+        }else if(w.equals("DATABASE")){
+            dataBase = true;
+        }else{
+            throw new IllegalArgumentException("ERROR: invalid command word \""+
+                    word.get(1)+"\"");
+        }
+        //checks if 3rd word is a command instead of a name
+        w = word.get(2);
+        if(!isValue(word.get(2))){
+            throw new IllegalArgumentException("ERROR: table or database name must be a value"); 
+        }else if(dataBase){  //search for name
+            if(!filesystem.deleteDb(w)){
+                throw new IllegalArgumentException("ERROR: database name not found: cannot be dropped");
+            }
+        }else{
+            if(!filesystem.deleteTable(w, DATABASE_NAME)){
+                throw new IllegalArgumentException("ERROR: table name not found: cannot be dropped");
+            }
+            tI = tableSearch(w);
+            TABLES.remove(tI);
         }
     }
     
@@ -126,8 +220,7 @@ public class BiblioBaseDBMS {
         String attType = new String();
         int tI = 0;  //index for current table insertion will be occuring in
         int wP = 0;  //keeps track of word place in command
-        ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
-        ArrayList<Attribute> columns = new ArrayList<>();
+        ArrayList<ArrayList<Field>> records = null;
         ArrayList<Field> values = new ArrayList<>();
         ArrayList<Integer> colIdx = new ArrayList<>();
         ArrayList<Integer> I = null;
@@ -141,7 +234,7 @@ public class BiblioBaseDBMS {
         }
         //check if third word is SET
         wP++;
-        if(!word.get(wP).equals("SET")){
+        if(!word.get(wP).toUpperCase().equals("SET")){
             throw new IllegalArgumentException("\""+word.get(wP)+"\""
                     + " is not SET");
         }
@@ -151,9 +244,9 @@ public class BiblioBaseDBMS {
             Field f;
             Attribute a;
             
-            if(i % 3 == 0 && word.get(i).equals("WHERE")){
+            if(i % 3 == 0 && word.get(i).toUpperCase().equals("WHERE")){
                 break;
-            }else if(word.get(i).equals("WHERE")){
+            }else if(word.get(i).toUpperCase().equals("WHERE")){
                 throw new IllegalArgumentException("ERROR: WHERE word is in "
                         + " invalid position");
             }
@@ -162,7 +255,7 @@ public class BiblioBaseDBMS {
                 throw new IllegalArgumentException("ERROR: \""+word.get(i)+"\""
                  + " has to be a value, not a command or operator");
             }
-            if(i % 3 == 0 && i+2 < word.size()){
+            if(i % 3 == 0 && (i+2) < word.size()){
                 String type = TABLES.get(tI).getAttType(word.get(i));
                 int idx = TABLES.get(tI).getAttributeIdx(word.get(i));
                 f = new Field(word.get(i+2));
@@ -177,7 +270,6 @@ public class BiblioBaseDBMS {
                     throw new IllegalArgumentException("ERROR: column and value"
                             + " types do no match in SET clause");
                 }
-                columns.add(a);
                 colIdx.add(idx);
                 values.add(f);
             }else if(i % 3 == 0){
@@ -187,6 +279,7 @@ public class BiblioBaseDBMS {
             wP++;
         }
         //check if there is no where clause, if not use update all
+        records = TABLES.get(tI).getRecords();
         if(wP == word.size()){
             for(int i = records.size()-1; i > -1; i--){
                 for(int j = colIdx.size()-1; j > -1; j--){
@@ -196,7 +289,7 @@ public class BiblioBaseDBMS {
             return; //exit function
         }
         //check if WHERE is next word
-        if(!word.get(wP).equals("WHERE")){
+        if(!word.get(wP).toUpperCase().equals("WHERE")){
             throw new IllegalArgumentException("ERROR: The WHERE clause is not in "
                     + "the correct location");
         }else{
@@ -212,14 +305,14 @@ public class BiblioBaseDBMS {
         }
     }
     
-        static void selectCheck(ArrayList<String> word){
+    static void selectCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
         String attType = new String();
         int tI = 0;  //index for current table insertion will be occuring in
         int wP = 0;  //keeps track of word place in command
         ArrayList<String> colNames = null;
-        ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
+        ArrayList<ArrayList<Field>> records;
         ArrayList<Attribute> columns = null;
         ArrayList<Integer> colIdx = null;
         ArrayList<Integer> I = null;
@@ -234,8 +327,8 @@ public class BiblioBaseDBMS {
             int size = word.size();
             for(int i = wP; i < size; i++){
                 //break out of loop when FROM word is found
-                if(word.get(i).equals("FROM")){
-                    if(i == 2){
+                if(word.get(i).toUpperCase().equals("FROM")){
+                    if(i == 1){
                         throw new IllegalArgumentException("ERROR: no columns selected");
                     }else{
                         break;
@@ -252,9 +345,10 @@ public class BiblioBaseDBMS {
                 throw new IllegalArgumentException("ERROR: no columns selected--2");
             }
         }
+        
         //check from FROM word
         wP++;
-        if(!word.get(wP).equals("FROM")){
+        if(!word.get(wP).toUpperCase().equals("FROM")){
             throw new IllegalArgumentException("ERROR: no FROM word detected");
         }
         //checks if 3rd word is a command instead of a table name
@@ -284,12 +378,13 @@ public class BiblioBaseDBMS {
         //check if the next word is not WHERE
         ArrayList<ArrayList<Field>> recordsCrop = new ArrayList<>();
         Table t = null;
-        if(!word.get(wP).equals("WHERE")){
+        if(!word.get(wP).toUpperCase().equals("WHERE")){
             throw new IllegalArgumentException("ERROR: word should be WHERE");
         }
         //create tables
         wP++;
-        if(!selectAll){  //if user selected all columns
+        records = TABLES.get(tI).getRecords();
+        if(!selectAll){  //if user did not select all columns
             I = where(word, tI, wP);
             String a;
             ArrayList<Field> record = null;
@@ -303,7 +398,8 @@ public class BiblioBaseDBMS {
                 recordsCrop.add(record);
             }
             //create table 
-            t = new Table(TABLES.get(tI).getName(), columns, recordsCrop);
+            t = new Table(null, columns, recordsCrop);
+            t.convertToView();
         }else{
             //get records
             I = where(word, tI, wP);
@@ -312,7 +408,7 @@ public class BiblioBaseDBMS {
                 recordsCrop.add(records.get(idx));
             }
             //create table
-            t = new Table(TABLES.get(tI).getName(), columns, recordsCrop);
+            t = new Table(null, columns, recordsCrop);
         }
         displayTable(t);
     }
@@ -323,7 +419,7 @@ public class BiblioBaseDBMS {
         ArrayList<Integer> I = null;
         
         //checks if second word is FROM
-        if(!word.get(1).equals("FROM")){
+        if(!word.get(1).toUpperCase().equals("FROM")){
             throw new IllegalArgumentException("ERROR: invalid command \""+
                     word.get(1)+"\"");
         }
@@ -342,7 +438,7 @@ public class BiblioBaseDBMS {
             return; //exit function
         }
         //checks if there is a where command
-        if(!word.get(3).equals("WHERE")){
+        if(!word.get(3).toUpperCase().equals("WHERE")){
             throw new IllegalArgumentException("ERROR: invalid command \""+
                     word.get(3)+"\"");
         }else{
@@ -481,7 +577,6 @@ public class BiblioBaseDBMS {
         ArrayList<Integer> I = new ArrayList<>();
         Set<Integer> set = new HashSet<Integer>();
         boolean reParse = false;
-        
         //test entrees, execute AND operations, store OR operations
         for(int i = wP; i < word.size(); i++){
             if(place > 4){  //col = val (only groups of four at a time)
@@ -603,7 +698,7 @@ public class BiblioBaseDBMS {
         boolean allCol = false; //flags whether we're specifying columns or not
         
         //checks if second word is INTO
-        if(!word.get(1).equals("INTO")){
+        if(!word.get(1).toUpperCase().equals("INTO")){
             throw new IllegalArgumentException("ERROR: invalid command \""+
                     word.get(1)+"\"");
         }
@@ -614,7 +709,7 @@ public class BiblioBaseDBMS {
             tI = tableSearch(word.get(2));
         }
         //check for VALUES or column-name listing
-        switch (word.get(3)) {
+        switch (word.get(3).toUpperCase()) {
             case "VALUES":
                 allCol = true;
                 wP = 4; //move index over to the values' open parenthesis
@@ -661,7 +756,7 @@ public class BiblioBaseDBMS {
             wP++;
         }
         //check for word VALUE if allCol is false
-        if(!word.get(wP).equals("VALUES") && !allCol){
+        if(!word.get(wP).toUpperCase().equals("VALUES") && !allCol){
             throw new IllegalArgumentException("ERROR: missing VALUES command");
         }
         else if(!allCol){
@@ -670,7 +765,7 @@ public class BiblioBaseDBMS {
         //start saving values into list
         for(; wP < word.size()-1; wP++){
             //throw exception if word is a command
-            if(isCommand(word.get(wP))){
+            if(!isValue(word.get(wP))){
                 throw new IllegalArgumentException("ERROR: invalid column name or type");
             }
             Field f = new Field(word.get(wP));
@@ -684,16 +779,18 @@ public class BiblioBaseDBMS {
         if(allCol){ //if there were no user selected columns
             columns = TABLES.get(tI).getAttributes();
             Field b = new Field();
+            //add a blank primary key field
+            record.add(0, new Field(null, "FLOAT"));
             //check if there are as many values as columns
-            if(record.size() != columns.size()){
+            if(record.size() != columns.size()){                
                 throw new IllegalArgumentException("ERROR: column and value size don't match");
             }
             //see if there is an attribute missmatch
-            for(int i = 0; i < columns.size(); i++){
+            for(int i = 0; i < columns.size(); i++){            
                 b.setField(record.get(i));  //Field sets type based off of value string
                 if(!columns.get(i).hasType(b.getType())){ //if attribute is not same type as field
                     throw new IllegalArgumentException("ERROR: invalid column type: "
-                            +record.get(i));
+                            +record.get(i).getType());
                 }
             }   
         }else{      //user selected columns case
@@ -729,7 +826,6 @@ public class BiblioBaseDBMS {
         }
         //add record to table
         if(allCol){
-            Field f = new Field(record.get(0));
             TABLES.get(tI).insertRecord(record);
         }else{
             TABLES.get(tI).insertRecord(record2);
@@ -740,21 +836,37 @@ public class BiblioBaseDBMS {
         String tableName = new String();
         String attName = new String();
         String attType = new String();
+        String w;
         ArrayList<Attribute> columns = new ArrayList<>();
         Attribute a;
+        boolean database;
         
         //checks if second word is TABLE
-        if(!word.get(1).equals("TABLE")){
+        w = word.get(1).toUpperCase();
+        if(w.equals("TABLE")){
+            database = false;
+        }else if(w.equals("DATABASE")){
+            database = true;
+        }else{
             throw new IllegalArgumentException("ERROR: invalid command \""+
-                    word.get(1)+"\"");
+                    w+"\"");
         }
         
-        //checks if 3rd word is a command instead of a table name
-        if(isCommand(word.get(2))){
-            throw new IllegalArgumentException("ERROR: command cannot be table name"); 
+        //checks if 3rd word is not a value instead of a name
+        w = word.get(2);
+        if(!isValue(w)){
+            throw new IllegalArgumentException("ERROR: table name must be a value"); 
         }
-        tableName = word.get(2);
-        
+        tableName = w;
+        //check if we're creating a database
+        if(word.size() == 3 && database){
+            if(!filesystem.createDb(DATABASE_NAME)){
+                throw new IllegalArgumentException("ERROR: cannot drop non-existant database");
+            }
+            return;
+        }else if(word.size() == 3){
+             throw new IllegalArgumentException("ERROR: command length is too short for table creation");
+        }
         //check if open parenthesis isn't in correct location
         if(!word.get(3).equals("(")){
             throw new IllegalArgumentException("ERROR: missing open parenthesis");
@@ -789,7 +901,7 @@ public class BiblioBaseDBMS {
         boolean found = false;
         int tI = 0; //index for table
             for(int i = 0; i < TABLES.size() && !found; i++){
-                if(TABLES.get(i).getName().equals(tableName)){
+                if(TABLES.get(i).getName().toUpperCase().equals(tableName.toUpperCase())){
                     found = true;
                     tI = i;
                 }
@@ -802,58 +914,53 @@ public class BiblioBaseDBMS {
     
     static void displayTable(Table table){
         Attribute a;
-        
-        if(MAXLOGIN){
-            System.out.println("Table name: "+table.getName());
+        if(MAX_LOGIN){
             for(int i = 0; i < table.getNumAttributes(); i++){
                 a = table.getAttributes().get(i);
-                System.out.format("%-12s",a.getName());
-                if(i != table.getNumAttributes()-1)
-                    System.out.format("%-9s","|");
+                System.out.format("%-40s",a.getName());
             }
             System.out.println();
             for(int i = 0; i < table.getNumAttributes(); i++){
-                System.out.print("-----------------");
+                System.out.print("----------------------------------------");
             }
             System.out.println();
             for(int r = 0; r < table.getNumRecords(); r++){
-                for(int c = 0; c < table.getNumAttributes(); c++){
-                    ArrayList<Field> f = table.getRecord(r);
-                    System.out.format("%-21s",f.get(c).getValue());
+                if(table.getRecord(r).get(0).getValue() != null){
+                    for(int c = 0; c < table.getNumAttributes(); c++){
+                        ArrayList<Field> f = table.getRecord(r);
+                        System.out.format("%-40s",f.get(c).getValue());
+                    }
+                    System.out.println();
                 }
-                System.out.println();
             }
         }else{
-            //print table name
-            System.out.print("<"+table.getName()+">");
-            //print attribute names
-            System.out.print("[");
-            for(int i = 0; i < table.getNumAttributes(); i++){
-                a = table.getAttributes().get(i);
-                System.out.print(a.getName());
-                if(i != table.getNumAttributes()-1){
-                    System.out.print(",");
-                }
-            }
-            System.out.print("]");
+            System.out.print("{");
             //print values
-            for(int r = 0; r < table.getNumRecords(); r++){
-                System.out.print("(");
-                for(int c = 0; c < table.getNumAttributes(); c++){
-                    ArrayList<Field> f = table.getRecord(r);
-                    System.out.print(f.get(c).getValue());
-                    if(c != table.getNumAttributes()-1){
-                        System.out.print(",");
+            for(int c = 0; c < table.getNumAttributes(); c++){
+                ArrayList<Field> f = null;
+                a = table.getAttributes().get(c);
+                System.out.print("\""+a.getName().toUpperCase()+"\":[{");
+                for(int r = 0; r < table.getNumRecords(); r++){
+                    f = table.getRecord(r);
+                    if(f.get(0).getValue() != null){
+                        System.out.print("\""+f.get(c).getValue()+"\"");
+                        if(r != table.getNumRecords()-1){
+                            System.out.print(",");
+                        }
                     }
                 }
-                System.out.print(")");
+                if(c != table.getNumAttributes()-1)
+                    System.out.print("}],");
+                else
+                    System.out.print("}]");
             }
+            System.out.print("}");
         }
         System.out.println();
     }
     
     static boolean isCommand(String str){
-        return str.matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
+        return str.toUpperCase().matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK");
     }
     
@@ -862,7 +969,7 @@ public class BiblioBaseDBMS {
     }
     
     static boolean isLogicOp(String str){
-        return str.matches("OR|AND");
+        return str.toUpperCase().matches("OR|AND");
     }
     
     static boolean isFloat(String s){
@@ -882,14 +989,18 @@ public class BiblioBaseDBMS {
         //------------------------UNDER_CONSTRUCTION----------------------------------
         if(usr.length() > 1 && usr.substring(0, 1).equals("-")){
             //check if username is in database
-            USERNAME = usr.substring(1, usr.length());
-            MAXLOGIN = true;
-            return true;
+            if(true){
+                DATABASE_NAME = usr.substring(1, usr.length());
+                MAX_LOGIN = true;
+                return true;
+            }
         }else if(usr.length() > 0){
             //check if username is in database
-            USERNAME = usr;
-            MAXLOGIN = false;
-            return true;
+            if(true){
+                DATABASE_NAME = usr;
+                MAX_LOGIN = false;
+                return true;
+            }
         }
         return false;
     }
@@ -898,66 +1009,82 @@ public class BiblioBaseDBMS {
         TABLES = new ArrayList<>();
 /*----artificial data--------       
 create table friends('name' string 'hobby' string 'birthdate' date 'age' float);
-insert into friends values ('Jane Kang','guitar','14-3-1989',25);
+insert into friends values ('Jane H. Kang','guitar','14-3-1989',25);
 insert into friends values ('Mr. Burns','lute','16-6-1900',114);
 insert into friends values ('King Soandso','clavicord','01-5-1877',114);
 insert into friends (name,hobby) values ('echo','guitar');
 select * from friends;
 update friends set hobby = 'dancing' where hobby = 'lute';
 select * from friends;
+delete from friends where hobby = clavicord;
+select * from friends;
 select name, birthdate, hobby from friends where hobby = 'guitar';
 delete from friends;
+drop table friends;
+
+create table Book ('title' string,'author' string,'genre' string,'ISBN' float,'avail' string);
+insert into Book values ('Harry Potter 1','J. K. Rowling','Fantasy','00000001','True');
+insert into Book values ('Harry Potter 2','J. K. Rowling','Fantasy','00000002','True');
+select * from Book;
 */
         InputStream is = System.in;
         Scanner sc = new Scanner(is);
         String s = new String();
         boolean go = true;
         boolean login = false;
-        while(go){
+        
+        if(args.length == 2){
             //login to account
-            if(!login){
-                System.out.print("Username: ");
-                String usr = sc.nextLine();
-                //exit program if user inputs exit
-                if(usr.matches("exit|exit;"))
-                    break;
-                //check for username, if invalid, message than break
-                login = login(usr);
+            login(args[0]);
+            //parse commands string
+            parseString(args[1]);
+        }else{
+            while(go){
+                //login to account
                 if(!login){
-                    System.out.println("user was not found");
-                    continue;
+                    System.out.print("Username: ");
+                    String usr = sc.nextLine();
+                    //exit program if user inputs exit
+                    if(usr.matches("exit|exit;"))
+                        break;
+                    //check for username, if invalid, message than break
+                    login = login(usr);
+                    if(!login){
+                        System.out.println("user was not found");
+                        continue;
+                    }
                 }
-            }
-            //get input
-            s = "";
-            System.out.print("SQL> ");
-            while(true){
-                String temp = sc.useDelimiter(Pattern.compile("\\z")).next();
-                temp = temp.replaceAll("(\\r|\\n)", "");
-                s+=temp;
-                if(temp.length() != 0 && 
-                        temp.substring(temp.length()-1).equals(";")){
-                    break;
+                //get input
+                s = "";
+                System.out.print("SQL> ");
+                while(true){
+                    String temp = sc.useDelimiter(Pattern.compile("\\z")).next();
+                    temp = temp.replaceAll("(\\r|\\n)", "");
+                    s+=temp;
+                    if(temp.length() != 0 && 
+                            temp.substring(temp.length()-1).equals(";")){
+                        break;
+                    }
                 }
-            }
-            System.out.println();
-            //exit or do commands
-            if(s.length() >= 5 && 
-                    s.substring(s.length()-5).toUpperCase().equals("EXIT;")){
-                go = false;
-            } 
-            else{
-                try{
+                System.out.println();
+                //exit or do commands
+                if(s.length() >= 5 && 
+                        s.substring(s.length()-5).toUpperCase().equals("EXIT;")){
+                    go = false;
+                } 
+                else{
+//                    try{
+//                        parseString(s);
+//                    }
+//                    catch (Exception e){
+//                        System.out.println(e.getMessage());
+//                    }
                     parseString(s);
                 }
-                catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
-                //parseString(s);
             }
+            sc.close();
         }
-           
-        sc.close();
+        
     }
     
 }

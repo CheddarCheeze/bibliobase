@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package database_mgmt;
 
-/**
- *
- * @author Carl
- */
 public class Field{
     private String type;
     private String value;
@@ -31,7 +22,7 @@ public class Field{
     }
     
     public void setField(String value, String type){
-        if(value.equals("NULL") || value == null){
+        if(value == null || value.equals("NULL")){
             this.value = null;
             this.type = type;
         }
@@ -53,7 +44,7 @@ public class Field{
     }
     
     public void setField(String value){
-        if(value.equals("NULL")){
+        if(value == null || value.equals("NULL")){
             throw new IllegalArgumentException("ERROR: this Field method does not accept null as argument");
         }
         else if(Date.checkIfDate(value)){
@@ -74,7 +65,8 @@ public class Field{
     }
     
     public void setField(Field other){
-        setField(other.getValue());
+        this.value = other.getValue();
+        this.type = other.getType();
     }
     
     public void setType(String type){
@@ -84,7 +76,7 @@ public class Field{
     }
     
     public void setValue(String value){
-        if(value == null){
+        if(value == null || value.equals("NULL")){
             this.value = null;
         }
         else if(this.type.equals("DATE") && Date.checkIfDate(value)){

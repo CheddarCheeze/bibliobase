@@ -1,43 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package database_mgmt;
 
 import java.util.ArrayList;
 
-/**
- *
- * @author Carl
- */
 public class Table{
     private String name;
     private ArrayList<Attribute> attributes;
     private ArrayList<ArrayList<Field>> records;
-    private Attribute primaryKey;
-    
-    public Table(String name, ArrayList<Attribute> cols, 
-            ArrayList<ArrayList<Field>> rows, Attribute primaryKey){
-        this.name = name;
-        this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
-        this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
-        setPrimaryKey(primaryKey);
-    }
-    
+     
     public Table(String name, ArrayList<Attribute> cols, 
             ArrayList<ArrayList<Field>> rows){
         this.name = name;
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
         setPrimaryKey();
-    }
-    
-    public Table(String name, ArrayList<Attribute> cols, Attribute primaryKey){
-        this.name = name;
-        this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
-        this.records = new ArrayList<ArrayList<Field>>();
-        setPrimaryKey(primaryKey);
     }
     
     public Table(String name, ArrayList<Attribute> cols){
@@ -50,26 +25,11 @@ public class Table{
     public Table(Table other){
         this.name = other.getName();
         this.attributes = new ArrayList<Attribute>(other.getAttributes());    //not deep------------------------
-        setPrimaryKey(other.getPrimaryKey());
         this.records = other.getRecords();
     }
- 
-    public void setPrimaryKey(){
-        this.primaryKey = this.attributes.get(0);   //change this to find min-candidate key
-    }
     
-    public void setPrimaryKey(Attribute pKey){
-        if(attInAttributes(primaryKey)){
-            this.primaryKey = primaryKey;
-        }
-        else{
-            throw new IllegalArgumentException("ERROR: primary key is invalid");
-        }
-        //code for finding if it actually is a candidate key
-    }
-    
-    public Attribute getPrimaryKey(){
-        return this.primaryKey;
+    public void setTableName(String name){
+        this.name = name;
     }
     
     public boolean attInAttributes(Attribute col){
@@ -110,18 +70,62 @@ public class Table{
         }
     }
     
+    private void setPrimaryKey(){
+        Attribute primary = new Attribute("Id", "FLOAT");
+        if(this.getNumAttributes() > 0){
+            this.attributes.add(0, primary);
+        }
+        if(this.records.size() != 0){
+            String value;
+            for(int i = 0; i < this.records.size(); i++){
+                value = Integer.toString(i);
+                this.records.get(i).add(0, new Field(value, "FLOAT"));
+            }
+        }
+    }
+    
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
-        if(record.size() != getNumAttributes())
+        Field f = null;
+        int value;
+        String val = null;
+        
+        //test if record has correct size
+        if(record.size() != getNumAttributes()){  
             throw new IllegalArgumentException("ERROR: invalid record length");
+        }
+        
+        //find primary key number for record to be inserted
+        for(ArrayList<Field> rec : this.records){
+            if(rec.get(0).getValue() != null){
+                value = Integer.parseInt(rec.get(0).getValue()) + 1;
+                val = Integer.toString(value);
+            }else{
+                val = "0";
+            }
+        }
+        if(val == null){
+            val = "0";
+        }
+        
+        f = new Field(val,"FLOAT");
+        record.get(0).setField(f);
         this.records.add(record);
     }
     
     public void deleteRecord(int i){
         if(i < this.records.size() && i >= 0){  
-            this.records.remove(i);
+           this.records.get(i).get(0).setValue(null);
         }
         else{
             throw new IllegalArgumentException("ERROR: invalid record/index number");
+        }
+    }
+    
+    public void deleteAttribute(String s){
+        int idx = this.getAttributeIdx(s);
+        this.attributes.remove(idx);
+        for(ArrayList<Field> record : this.records){
+            record.remove(idx);
         }
     }
     
@@ -186,10 +190,18 @@ public class Table{
     }
     
     public String getName(){
-        if(this.name.isEmpty())
-            throw new IllegalArgumentException("ERROR: table has no name");
-        else{
-            return this.name;
+        return this.name;
+    }
+    
+    public void convertToView(){
+        String value;
+        for(int i = this.records.size()-1; i >= 0; i--){
+            value = this.records.get(i).get(0).getValue();
+            this.records.get(i).remove(0);
+            if(value == null){
+                this.records.remove(i);
+            }
         }
+        this.attributes.remove(0);
     }
 }

@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package database_mgmt;
 
-/**
- *
- * @author Carl
- */
 public class Attribute{
     private String name;
     private String type;
@@ -24,7 +15,6 @@ public class Attribute{
     
     public void setAttribute(String name, String type){
         type = type.toUpperCase();
-        name = name.toUpperCase();
         if(acceptType(type)){
             this.type = type;
             this.name = name;
@@ -35,7 +25,6 @@ public class Attribute{
     }
     
     public void setName(String name){
-        name = name.toUpperCase();
         this.name = name;
     }
     
@@ -58,7 +47,9 @@ public class Attribute{
     }
     
     public boolean isEqual(Attribute other){
-        if(other.name.equals(this.name) && other.type.equals(this.type)){
+        String n = this.name.toUpperCase();
+        String nO = other.getName().toUpperCase();
+        if(nO.equals(n) && other.type.equals(this.type)){
             return true;
         }
         else{
