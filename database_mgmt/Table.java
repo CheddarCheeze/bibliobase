@@ -78,9 +78,12 @@ public class Table{
     }
     
     private void setPrimaryKey(){
-        Attribute primary = new Attribute("Id", "FLOAT");
-        if(this.getNumAttributes() > 0){
-            this.attributes.add(0, primary);
+        if(this.attributes.size() > 0 && 
+                this.attributes.get(0).getName().equals("ID")){
+            return;
+        }
+        else{
+            this.attributes.add(0, new Attribute("ID", "FLOAT"));
         }
         if(this.records.size() != 0){
             String value;

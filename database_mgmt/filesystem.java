@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.nio.file.Files;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class filesystem
 {
@@ -79,10 +81,10 @@ public class filesystem
 		ArrayList<Field> record = new ArrayList<>();
 		ArrayList<ArrayList<Field>> recordlist = new ArrayList<ArrayList<Field>>();
 		//takes in attribute names and types
-		while(temp[i].equals("(") == false)
+		while(!temp[i].equals("("))
 		{
-			attributes.add(new Attribute(temp[i],temp[i++]));
-			i++;
+			attributes.add(new Attribute(temp[i],temp[i+1]));
+			i+=2;
 		}
 		i++; //skips the first parenthesis
 		//starts storing records
@@ -92,7 +94,7 @@ public class filesystem
 			if(temp[i].startsWith("\""))
 			{
 				if(temp[i].endsWith("\""))
-					record.add(new Field(temp[i].substring(1,temp.length-1)));
+					record.add(new Field(temp[i].substring(1,temp[i].length()-1)));
 				else
 				{
 					int j = i+1;
@@ -107,19 +109,14 @@ public class filesystem
 					i = j;
 				}
 			}
-			else if(temp[i].equals("|") || temp[i].equals(")"))
+			else if(temp[i].equals("|"))
 			{
-				recordlist.add(record);
-				record = new ArrayList<>();
-			}
-			else
-			{
-				record.add(new Field(temp[i]));
 				recordlist.add(record);
 				record = new ArrayList<>();
 			}
 			i++;
 		}
+                recordlist.add(record);
 		/*//print out arraylists for checking
             for(String value : attributeNames)
                     System.out.print(value + " ");
@@ -145,13 +142,19 @@ public class filesystem
 		
 		newtblstr += "( ";
 		
-		for(int i = 0; i < t.getNumRecords(); i++)
+                int i = 0;
+		for(ArrayList<Field> record : t.getRecords())
 		{
-			if(i+1 != t.getNumRecords())
-				newtblstr += t.getRecord(i) + " | ";
-			else
-				newtblstr += t.getRecord(i) + " )";
+			for(Field field : record){
+                                newtblstr += "\""+field.getValue()+"\" ";
+                        }
+                        if(i+1 == t.getNumRecords()){
+                            break;
+                        }
+                        newtblstr+= "| ";
+                        i++;
 		}
+                newtblstr += ")";
 		return newtblstr;
 	}
 	
@@ -186,16 +189,18 @@ public class filesystem
 	static Table getTable(String tblname, String dbname)
 	{
 		String s = new String();
-		InputStream dbfile = BiblioBaseDBMS.class.getResourceAsStream(dbname+".txt");
-		if(dbfile == null){
-            throw new IllegalArgumentException("ERROR: no such database found");
-        }
+		InputStream dbfile = null;
+                try {
+                        dbfile = new FileInputStream("databases/"+dbname+".txt");
+                } catch (FileNotFoundException ex) {
+                        Logger.getLogger(filesystem.class.getName()).log(Level.SEVERE, null, ex);
+                }
 		boolean foundtbl = false;
 		Scanner inputF = new Scanner(dbfile);
 		while(inputF.hasNextLine())
 		{
 			s = inputF.nextLine();
-			Scanner tsearch = new Scanner(s);
+			Scanner tsearch = new Scanner(s);   
 			if(tsearch.hasNext())
 			{
 				String tablename = tsearch.next();
@@ -216,10 +221,12 @@ public class filesystem
 	//Returns false if table doesn't exist
 	static boolean modifyTable(Table t, String dbname)
 	{
-		InputStream dbfile = BiblioBaseDBMS.class.getResourceAsStream(dbname+".txt");
-		if(dbfile == null){
-            throw new IllegalArgumentException("ERROR: no such database found");
-        }
+		InputStream dbfile = null;
+                try {
+                        dbfile = new FileInputStream("databases/"+dbname+".txt");
+                } catch (FileNotFoundException ex) {
+                        Logger.getLogger(filesystem.class.getName()).log(Level.SEVERE, null, ex);
+                }
 		boolean foundtbl = false;
 		Scanner inputF = new Scanner(dbfile);
 		ArrayList<String> othertbls = new ArrayList<>();
@@ -270,10 +277,12 @@ public class filesystem
 	//done
 	static boolean createTable(Table t, String dbname)
 	{
-		InputStream dbfile = BiblioBaseDBMS.class.getResourceAsStream(dbname+".txt");
-		if(dbfile == null){
-            throw new IllegalArgumentException("ERROR: no such database found");
-        }
+		InputStream dbfile = null;
+                try {
+                        dbfile = new FileInputStream("databases/"+dbname+".txt");
+                } catch (FileNotFoundException ex) {
+                        Logger.getLogger(filesystem.class.getName()).log(Level.SEVERE, null, ex);
+                }
 		boolean foundtbl = false;
 		String newtblstr = tableToStr(t);
 		
@@ -295,7 +304,6 @@ public class filesystem
 		inputF.close();
 		if(foundtbl == true)
 		{
-			System.out.println("Table doesn't exist");
 			return false;
 		}
 		else

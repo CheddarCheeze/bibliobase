@@ -729,7 +729,7 @@ public class BiblioBaseDBMS {
                 for(int i = 4; i < size-1; i++){
                     //break out of loop when closing brace is found
                     if(word.get(i).equals(")")){
-                        if(i == 5){
+                        if(i == 4){
                             throw new IllegalArgumentException("ERROR: no columns selected");
                         }else{
                             break;
@@ -789,7 +789,7 @@ public class BiblioBaseDBMS {
             //add a blank primary key field
             record.add(0, new Field(null, "FLOAT"));
             //check if there are as many values as columns
-            if(record.size() != columns.size()){                
+            if(record.size() != columns.size()){
                 throw new IllegalArgumentException("ERROR: column and value size don't match");
             }
             //see if there is an attribute missmatch
@@ -900,7 +900,9 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("ERROR: missing close parenthesis");
         }
         
-        TABLES.add(new Table(tableName, columns));
+        Table T = new Table(tableName, columns);
+        TABLES.add(T);
+        filesystem.createTable(T, DATABASE_NAME);
     }
     
     static int tableSearch(String tableName){
@@ -914,6 +916,7 @@ public class BiblioBaseDBMS {
             }
         if(!foundInMemory){
             Table t = filesystem.getTable(tableName, DATABASE_NAME);
+            
             if(t!= null){
                 TABLES.add(t);
                 tI = TABLES.size()-1;
@@ -1042,7 +1045,7 @@ public class BiblioBaseDBMS {
             while(go){
                 //login to account
                 if(!login){
-                    System.out.print("Username: ");
+                    System.out.print("Account Name: ");
                     String usr = sc.nextLine();
                     //exit program if user inputs exit
                     if(usr.matches("exit|exit;"))
@@ -1072,13 +1075,13 @@ public class BiblioBaseDBMS {
                     go = false;
                 } 
                 else{
-                    try{
-                        parseString(s);
-                    }
-                    catch (Exception e){
-                        System.out.println(e.getMessage());
-                    }
-                    //parseString(s);
+//                    try{
+//                        parseString(s);
+//                    }
+//                    catch (Exception e){
+//                        System.out.println(e.getMessage());
+//                    }
+                    parseString(s);
                 }
             }
             sc.close();
