@@ -51,10 +51,16 @@ public class Table{
     }
     
     public void insertAttribute(String name, String type){
-        this.attributes.add(new Attribute(name, type));
+        this.attributes.add(new Attribute(name, type)); //Attribute class throws exception if type is invalid
         for(ArrayList<Field> rec : this.records){
             rec.add(new Field(null, type));
         } 
+    }
+    
+    public void insertAttribute(Attribute a){
+        String name = a.getName();
+        String type = a.getType();
+        insertAttribute(name, type);
     }
     
     public boolean typeInAttributes(String type, ArrayList<Attribute> cols){

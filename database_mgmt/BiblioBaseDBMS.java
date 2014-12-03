@@ -180,13 +180,52 @@ public class BiblioBaseDBMS {
             }else{
                 throw new IllegalArgumentException("ERROR: 5th word should be TO or COLUMN in ALTER command or command size too small");
             }
-        }else if(w.equals("ADD")){
-            //DO STUFF-----------------------------------------------------------------------------------------------------------------------------
+        }
+        //Check for ADD command and set
+        if(w.equals("ADD")){
+            if(word.size() == 6){   //if adding only one column
+                if(!isValue(word.get(4)) || !isValue(word.get(5))){
+                    throw new IllegalArgumentException("ERROR: 5th or 6th word should not be a system word");
+                }
+                tI = tableSearch(tableName);
+                TABLES.get(tI).insertAttribute(word.get(4), word.get(5));
+                return;
+            }else{  //if adding multiple columns
+                String attName = null;
+                String attType = null;
+                Attribute a = null;
+                ArrayList<Attribute> columns = new ArrayList<>();
+                //check for (
+                if(!word.get(4).equals("(")){
+                    throw new IllegalArgumentException("ERROR: missing open parenthesis");
+                }
+                //check if the next two column values aren't values then add to columns otherwise
+                for(int i = 5; i < word.size()-1; i++){
+                    //throw exception if word is a command
+                    if(!isValue(word.get(i))){
+                        throw new IllegalArgumentException("ERROR: column information cannot be system words");
+                    } //for even word, check if it's closed in single quotes
+                    if((i & 1) == 0){   //check low bit for even-ness
+                        attName = word.get(i); //remove single quotes
+                    }
+                    else{
+                        attType = word.get(i);
+                        a = new Attribute(attName, attType);
+                        columns.add(a);
+                    }
+                }
+                //check for closing parenthesis
+                if(!word.get(word.size()-1).equals(")")){
+                    throw new IllegalArgumentException("ERROR: missing close parenthesis");
+                }
+                for(Attribute col : TABLES.get(tI).getAttributes()){
+                    TABLES.get(tI).insertAttribute(col);
+                }
+                return;
+            }
         }else{
             throw new IllegalArgumentException("ERROR: 4th word should be DROP, RENAME, or ADD in ALTER command");
-        }
-        
-        
+        }     
     }
     
     static void dropCheck(ArrayList<String> word){
