@@ -1,0 +1,1 @@
+Magazine ID FLOAT Author STRING Title STRING ( "0" "A Beautiful World" "John Smith" | "1" "Scary Dark Oceans" "Poc A. Hontas" )

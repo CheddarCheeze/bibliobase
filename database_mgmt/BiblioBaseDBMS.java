@@ -181,7 +181,7 @@ public class BiblioBaseDBMS {
                 throw new IllegalArgumentException("ERROR: 5th word should be TO or COLUMN in ALTER command or command size too small");
             }
         }else if(w.equals("ADD")){
-            DO STUFF
+            //DO STUFF-----------------------------------------------------------------------------------------------------------------------------
         }else{
             throw new IllegalArgumentException("ERROR: 4th word should be DROP, RENAME, or ADD in ALTER command");
         }
