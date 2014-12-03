@@ -279,14 +279,11 @@ public class BiblioBaseDBMS {
             if(!filesystem.deleteDb(w)){
                 throw new IllegalArgumentException("ERROR: database name not found: cannot be dropped");
             }
-            //Do Stuff
         }else{
             if(!filesystem.deleteTable(w, DATABASE_NAME)){
                 throw new IllegalArgumentException("ERROR: table name not found: cannot be dropped");
             }
-            tI = tableSearch(w);
-            TABLES.remove(tI);
-            //Do Stuff
+            TABLES.clear();
         }
     }
     

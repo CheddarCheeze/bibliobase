@@ -50,12 +50,10 @@ public class filesystem
 		File file = new File("databases/" + dbname + ".txt");
 		if(file.delete())
 		{
-			System.out.println("successful file deletion");
 			return true;
 		}
 		else
 		{
-			System.out.println("Failed file deletion");
 			return false;
 		}
 	}
@@ -72,12 +70,10 @@ public class filesystem
         }
 		if(oldfile.renameTo(newfile))
 		{
-			System.out.println("successful rename");
 			return true;
 		}
 		else
 		{
-			System.out.println("Failed to rename");
 			return false;
 		}
 	}
@@ -224,7 +220,6 @@ public class filesystem
 		}
 		inputF.close();
 		
-		System.out.println("Failed to find the table!");
 		return null;
 	}
 	
@@ -269,16 +264,13 @@ public class filesystem
 					f1.write(var + "\n");
 				f1.flush();
 				f1.close();
-				System.out.println("Updated the table.");
 				return true;
 			} catch (IOException x) {
-				System.out.println("Error saving to modify file");
 				return false;
 			}
 		}
 		else
 		{
-			System.out.println("Table doesn't exist");
 			return false;
 		}
 	}
@@ -323,10 +315,8 @@ public class filesystem
 				f1.write(newtblstr);
 				f1.flush();
 				f1.close();
-				System.out.println("Created the table.");
 				return true;
 			} catch (IOException x) {
-				System.out.println("Error saving to add table in file");
 				return false;
 			}
 		}
@@ -337,10 +327,12 @@ public class filesystem
 	//done
 	static boolean deleteTable(String tblname, String dbname)
 	{
-		InputStream dbfile = BiblioBaseDBMS.class.getResourceAsStream(dbname+".txt");
-		if(dbfile == null){
-            throw new IllegalArgumentException("ERROR: no such database found");
-        }
+		InputStream dbfile = null;
+                try {
+                        dbfile = new FileInputStream("databases/"+dbname+".txt");
+                } catch (FileNotFoundException ex) {
+                        Logger.getLogger(filesystem.class.getName()).log(Level.SEVERE, null, ex);
+                }
 		boolean foundtbl = false;
 		Scanner inputF = new Scanner(dbfile);
 		ArrayList<String> othertbls = new ArrayList<>();
@@ -367,16 +359,13 @@ public class filesystem
 					f1.write(var + "\n");
 				f1.flush();
 				f1.close();
-				System.out.println("Deleted the table.");
 				return true;
 			} catch (IOException x) {
-				System.out.println("Error saving to modify file");
 				return false;
 			}
 		}
 		else
 		{
-			System.out.println("Table doesn't exist");
 			return false;
 		}
 	}
@@ -417,16 +406,13 @@ public class filesystem
 			{
 				for(String var : othertbls)
 					f1.write(var + "\n");
-				System.out.println("Renamed the table.");
 				return true;
 			} catch (IOException x) {
-				System.out.println("Error saving to modify file");
 				return false;
 			}
 		}
 		else
 		{
-			System.out.println("Table doesn't exist");
 			return false;
 		}
 	}
