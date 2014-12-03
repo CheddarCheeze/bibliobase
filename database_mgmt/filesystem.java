@@ -11,6 +11,17 @@ import java.util.logging.Logger;
 
 public class filesystem
 {
+        //Returns true if dbname.txt is inside of databases
+        static boolean searchDb(String dbname)
+	{
+		File folder = new File("databases");
+		if(!folder.exists())
+                        return false;
+		
+		File dbfile = new File("databases/"+dbname+".txt");
+                return dbfile.exists();
+	}
+        
 	//Returns true if database.txt is created
 	//done
 	static boolean createDb(String dbname)

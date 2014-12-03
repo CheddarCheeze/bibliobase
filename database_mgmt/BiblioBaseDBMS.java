@@ -41,14 +41,17 @@ public class BiblioBaseDBMS {
             for(int j = 0; j < words.get(i).size(); j++){
                 s = words.get(i).get(j);
                 //if quotes close on single token
-                if(s.startsWith("\'") && s.endsWith("\'")){
+                if( (s.startsWith("\'") && s.endsWith("\'")) ||
+                        (s.startsWith("\"") && s.endsWith("\"")) ){
                     s = s.substring(1, s.length()-1);
                     words.get(i).set(j, s);
                 }
-                else if(s.startsWith("\'") && quotePlace == -1){
+                else if( (s.startsWith("\'") || s.startsWith("\"")) 
+                        && quotePlace == -1){
                     quotePlace = j;
                 }
-                else if(s.endsWith("\'") && quotePlace != -1){
+                else if( (s.endsWith("\'") || s.endsWith("\"")) 
+                        && quotePlace != -1){
                     s2 = words.get(i).get(quotePlace);
                     s = s2+" "+s;
                     s = s.substring(1, s.length()-1);
@@ -119,11 +122,36 @@ public class BiblioBaseDBMS {
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid ALTER command length");
                     }
+                case "TRUNCATE":
+                    if(word.size() == 3){
+                        truncateCheck(word);
+                    }else{
+                        throw new IllegalArgumentException("ERROR: TRUNCATE should have 3 words");
+                    }
                 case "EXIT":
                     break;
                 default:
                     throw new IllegalArgumentException("\"" + word.get(0) + "\"" + " is not a valid command");
             }
+        }
+    }
+    
+    static void truncateCheck(ArrayList<String> word){
+        String tableName = null;
+        int tI = -1;
+        
+        if(word.get(1).equals("TABLE")){
+           throw new IllegalArgumentException("ERROR: 2nd word in TRUNCATE command is not TABLE"); 
+        }
+        tableName = word.get(2);
+        if(!isValue(tableName)){
+            throw new IllegalArgumentException("ERROR: table name in TRUNCATE command should not be a system word");
+        }
+        //get table
+        tI = tableSearch(tableName);
+        //delete all rows
+        for(int i = TABLES.get(tI).getRecords().size()-1; i >= 0; i--){
+            TABLES.get(tI).deleteRecord(i);
         }
     }
     
@@ -251,12 +279,14 @@ public class BiblioBaseDBMS {
             if(!filesystem.deleteDb(w)){
                 throw new IllegalArgumentException("ERROR: database name not found: cannot be dropped");
             }
+            //Do Stuff
         }else{
             if(!filesystem.deleteTable(w, DATABASE_NAME)){
                 throw new IllegalArgumentException("ERROR: table name not found: cannot be dropped");
             }
             tI = tableSearch(w);
             TABLES.remove(tI);
+            //Do Stuff
         }
     }
     
@@ -391,7 +421,6 @@ public class BiblioBaseDBMS {
                 throw new IllegalArgumentException("ERROR: no columns selected--2");
             }
         }
-        
         //check from FROM word
         wP++;
         if(!word.get(wP).toUpperCase().equals("FROM")){
@@ -406,7 +435,7 @@ public class BiblioBaseDBMS {
         }
         //check if there are no extra words
         wP++;
-        if(wP == word.size()){
+        if(wP == word.size() && selectAll){
             displayTable(TABLES.get(tI));   //execute basic select display
             return;
         }
@@ -421,15 +450,33 @@ public class BiblioBaseDBMS {
                 colIdx.add(TABLES.get(tI).getAttributeIdx(col));
             }
         }      
-        //check if the next word is not WHERE
+        //display for no WHERE and specified columns selected
         ArrayList<ArrayList<Field>> recordsCrop = new ArrayList<>();
         Table t = null;
+        records = TABLES.get(tI).getRecords();
+        if(wP == word.size()){
+            String a;
+            ArrayList<Field> record = null;
+            //get records
+            for(int i = 0; i < records.size(); i++){
+                record = new ArrayList<>();
+                for(int j = 0; j < colIdx.size(); j++){
+                    record.add(records.get(i).get(colIdx.get(j)));
+                }
+                recordsCrop.add(record);
+            }
+            //create table 
+            t = new Table(null, columns, recordsCrop);
+            t.convertToView();
+            displayTable(t);
+            return;
+        }
+        //check for WHERE clause
         if(!word.get(wP).toUpperCase().equals("WHERE")){
             throw new IllegalArgumentException("ERROR: word should be WHERE");
         }
         //create tables
         wP++;
-        records = TABLES.get(tI).getRecords();
         if(!selectAll){  //if user did not select all columns
             I = where(word, tI, wP);
             String a;
@@ -1041,17 +1088,16 @@ public class BiblioBaseDBMS {
     }
     
     static boolean login(String usr){
-        //------------------------UNDER_CONSTRUCTION----------------------------------
         if(usr.length() > 1 && usr.substring(0, 1).equals("-")){
             //check if username is in database
-            if(true){
+            if(filesystem.searchDb(usr.substring(1, usr.length()))){
                 DATABASE_NAME = usr.substring(1, usr.length());
                 MAX_LOGIN = true;
                 return true;
             }
         }else if(usr.length() > 0){
             //check if username is in database
-            if(true){
+            if(filesystem.searchDb(usr)){
                 DATABASE_NAME = usr;
                 MAX_LOGIN = false;
                 return true;
@@ -1084,7 +1130,7 @@ public class BiblioBaseDBMS {
             while(go){
                 //login to account
                 if(!login){
-                    System.out.print("Account Name: ");
+                    System.out.print("Enter Account Name: ");
                     String usr = sc.nextLine();
                     //exit program if user inputs exit
                     if(usr.matches("exit|exit;"))
@@ -1092,7 +1138,7 @@ public class BiblioBaseDBMS {
                     //check for username, if invalid, message than break
                     login = login(usr);
                     if(!login){
-                        System.out.println("user was not found");
+                        System.out.println("Account was not found");
                         continue;
                     }
                 }
