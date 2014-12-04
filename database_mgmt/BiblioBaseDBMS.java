@@ -22,10 +22,14 @@ public class BiblioBaseDBMS {
     static ArrayList<Table> TABLES;
     static String DATABASE_NAME;
     static boolean MAX_LOGIN;
+    static boolean CATTING;
+    static String CAT_DATABASE_NAME;
+    static boolean SYS_ADMIN;
     
     static void parseString(String str){
         ArrayList<ArrayList<String>> words= new ArrayList<>();
         String[] commandUp = str.split("[;]");
+        
         for(int i = 0; i < commandUp.length; i++){
             String[] temp = commandUp[i].split("[ ,]|"
                     + "((?<=\\()|(?=\\()|(?<=\\))|(?=\\)))");
@@ -88,6 +92,7 @@ public class BiblioBaseDBMS {
                     //if size of command is >= 7
                     if(word.size() >= 7){
                         insertCheck(word);
+                        CATTING = false;    //After inserting table into cat it wont need to be on
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid INSERT command length");
                     }   break;
@@ -280,6 +285,9 @@ public class BiblioBaseDBMS {
         if(!isValue(word.get(2))){
             throw new IllegalArgumentException("ERROR: table or database name must be a value"); 
         }else if(dataBase){  //search for name
+            if(!SYS_ADMIN){
+                throw new IllegalArgumentException("only admin can drop databases");
+            }
             if(!filesystem.deleteDb(w)){
                 throw new IllegalArgumentException("ERROR: database name not found: cannot be dropped");
             }
@@ -429,8 +437,8 @@ public class BiblioBaseDBMS {
         }
         //checks if 3rd word is a command instead of a table name
         wP++;
-        if(isCommand(word.get(wP))){
-            throw new IllegalArgumentException("ERROR: command cannot be table name"); 
+        if(!isValue(word.get(wP)) && !word.get(wP).equals("cat")){
+            throw new IllegalArgumentException("ERROR: table name cannot be system word"); 
         }else{  //search for table with name from Tables
             tI = tableSearch(word.get(wP));
         }
@@ -971,9 +979,15 @@ public class BiblioBaseDBMS {
         tableName = w;
         //check if we're creating a database
         if(word.size() == 3 && database){
+            if(!SYS_ADMIN){
+                throw new IllegalArgumentException("only admin can create databases");
+            }
             if(!filesystem.createDb(word.get(2))){
                 throw new IllegalArgumentException("ERROR: database already exists");
             }
+            CATTING = true;
+            CAT_DATABASE_NAME = word.get(2);
+            parseString("create table cat ( 'table' string );");
             return;
         }else if(word.size() == 3){
              throw new IllegalArgumentException("ERROR: command length is too short for table creation");
@@ -987,7 +1001,7 @@ public class BiblioBaseDBMS {
         //if they pass, then add them to the column list
         for(int i = 4; i < word.size()-1; i++){
             //throw exception if word is a command
-            if(isCommand(word.get(i))){
+            if(!isValue(word.get(i))){
                 throw new IllegalArgumentException("ERROR: invalid column name or type");
             } //for even word, check if it's closed in single quotes
             if((i & 1) == 0){   //check low bit for even-ness
@@ -1003,10 +1017,27 @@ public class BiblioBaseDBMS {
         if(!word.get(word.size()-1).equals(")")){
             throw new IllegalArgumentException("ERROR: missing close parenthesis");
         }
-        
+        //create cat table for new database
         Table T = new Table(tableName, columns);
-        TABLES.add(T);
-        filesystem.createTable(T, DATABASE_NAME);
+        if(CATTING & SYS_ADMIN){
+            CATTING = false;
+            filesystem.createTable(T, CAT_DATABASE_NAME);
+            TABLES.clear();
+            return;
+        }
+        //determine if table can be created then create or throw exception
+        if(!filesystem.createTable(T, DATABASE_NAME)){
+            throw new IllegalArgumentException("ERROR: table already exists");
+        }else
+            TABLES.add(T);  //must be added to memory only after determining if table can be created
+        //insert new tablename into cat table
+        if(!CATTING & !SYS_ADMIN){
+            CATTING = true;
+            parseString("insert into cat values("+tableName+");");
+        }else if(CATTING & !SYS_ADMIN){
+            CATTING = false;
+        }
+        
     }
     
     static int tableSearch(String tableName){
@@ -1079,9 +1110,14 @@ public class BiblioBaseDBMS {
     }
     
     static boolean isCommand(String str){
-        return str.toUpperCase().matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
+        if(CATTING){
+            return str.toUpperCase().matches("CREATE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
                 + "TRUNCATE|DATABASE");
+        }
+        return str.toUpperCase().matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
+                + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
+                + "TRUNCATE|DATABASE|CAT");
     }
     
     static boolean isOperator(String str){
@@ -1107,6 +1143,11 @@ public class BiblioBaseDBMS {
     
     static boolean login(String usr){
         if(usr.length() > 1 && usr.substring(0, 1).equals("-")){
+            //check if admin
+            if(usr.substring(1, usr.length()).toUpperCase().equals("ADMIN")){
+                SYS_ADMIN = true;
+                return true;
+            }
             //check if username is in database
             if(filesystem.searchDb(usr.substring(1, usr.length()))){
                 DATABASE_NAME = usr.substring(1, usr.length());
@@ -1114,6 +1155,11 @@ public class BiblioBaseDBMS {
                 return true;
             }
         }else if(usr.length() > 0){
+            //check if admin
+            if(usr.toUpperCase().equals("ADMIN")){
+                SYS_ADMIN = true;
+                return true;
+            }
             //check if username is in database
             if(filesystem.searchDb(usr)){
                 DATABASE_NAME = usr;
@@ -1138,6 +1184,8 @@ public class BiblioBaseDBMS {
         String s = new String();
         boolean go = true;
         boolean login = false;
+        CATTING = false;
+        SYS_ADMIN = false;
         
         if(args.length == 2){
             //login to account
@@ -1178,13 +1226,13 @@ public class BiblioBaseDBMS {
                     go = false;
                 } 
                 else{
-//                    try{
-//                        parseString(s);
-//                    }
-//                    catch (Exception e){
-//                        System.out.println(e.getMessage());
-//                    }
-                    parseString(s);
+                    try{
+                        parseString(s);
+                    }
+                    catch (Exception e){
+                        System.out.println(e.getMessage());
+                    }
+                    //parseString(s);
                 }
             }
             sc.close();

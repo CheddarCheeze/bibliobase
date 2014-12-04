@@ -265,8 +265,10 @@ public class filesystem
 			
 			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt", false))
 			{
-				for(String var : othertbls)
-					f1.write(var + "\n");
+				for(int i = 0; i < othertbls.size(); i++){
+                                    String var = othertbls.get(i);
+                                        f1.write(var + "\n");
+                                }
 				f1.flush();
 				f1.close();
 				return true;
@@ -317,7 +319,7 @@ public class filesystem
 		else
 		{
 			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt", true)){
-				f1.write(newtblstr);
+				f1.write(newtblstr+"\n");
 				f1.flush();
 				f1.close();
 				return true;
