@@ -164,8 +164,8 @@ $output = shell_exec('java ');
 		<?php echo $data;}
 		else{
 			?><p>*You must select a type.</p><?php
-			echo $_SESSION['security'];
-			echo $_SESSION['email'];
+			//echo $_SESSION['security']; //used these as debug tools
+			//echo $_SESSION['email'];
 		}
 		?>	
 	</div>
