@@ -1,8 +1,21 @@
 <?php 
 session_start();
 
+if(!isset($_SESSION['username'])){
+	
+	$_SESSION['security'] = "guest";
+}
+
+
+if($_POST['logout']){
+	//unset($_SESSION['username'], $_SESSION['security'], $_SESSION['email']);
+	session_unset();
+}
+
 $searchterm = $_POST["atextsearch"];
-$searchtype = $_POST["searchlist"];
+$searchtype = $_POST["searchType"];
+$data = "select " . $searchterm . " " . $searchtype;
+$output = shell_exec('java ');
 	
 ?>
 <!DOCTYPE html>
@@ -14,6 +27,7 @@ $searchtype = $_POST["searchlist"];
     <meta name="description" content="">
     <meta name="author" content="">
     <link rel="icon" href="favicon.ico">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 
     <title>Software Engineering Project</title>
 
@@ -23,6 +37,10 @@ $searchtype = $_POST["searchlist"];
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -39,7 +57,7 @@ $searchtype = $_POST["searchlist"];
 		background-repeat: no-repeat;
 	}
 	</style>
-  </head>
+	</head>
 <!-- NAVBAR
 ================================================== -->
   <body>
@@ -61,22 +79,45 @@ $searchtype = $_POST["searchlist"];
               <ul class="nav navbar-nav">
                 <li class="active"><a href="index.html">Home</a></li>
                 <li><a href="#about">About</a></li>
-				<li><a href="first.php">Your Desk</a></li>
-                <li><a href="#contact">Contact</a></li>
+				<?php if($_SESSION['security'] != "guest"){?>
+				<li><a href="first.php">My Desk</a></li>
+				<?php }?>
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tools <span class="caret"></span></a>
                   <ul class="dropdown-menu" role="menu">
-                    <li><a href="#">Search</a></li>
-                    <li><a href="#">Modify</a></li>
-                    <li><a href="#">Create</a></li>
+                    <li><a href="search.php">Search</a></li>
+					<?php if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+                    <li><a href="add.php">Add Material</a></li>
+					<li><a href="#">Delete Material</a></li>
+					<?php }?>
                     <li class="divider"></li>
-                    <li class="dropdown-header">Nav header</li>
-                    <li><a href="#">Separated link</a></li>
-                    <li><a href="#">One more separated link</a></li>
+                    <li class="dropdown-header">Help/Services</li>
+                    <li><a href="#">Questions?</a></li>
+                    <li><a href="#">Request A Book</a></li>
                   </ul>
                 </li>
-				<li><a href="search.php">Search</a></li>
               </ul>
+			  <?php if(!isset($_SESSION['username'])){ ?>
+	              <form class="navbar-form navbar-right" action="security/bblogin.php" role="search">
+	                    <div class="form-group">
+	                        <input type="text" class="form-control" name="username" placeholder="Username">
+	                    </div>
+	                    <div class="form-group">
+	                        <input type="text" class="form-control" name="password" placeholder="Password">
+	                    </div>
+	                    <label class="checkbox">
+	          <input type="checkbox" value="remember-me"> Remember me
+	          </label>
+	                    <button type="submit" onclick="check(this.form)" class="btn btn-default">Sign In</button>
+	                </form>
+					<?php }
+					else
+					{
+						?>
+						<form  name="logout" class="navbar-form navbar-right" action="index.html">
+							Welcome, <?php echo $_SESSION['username'];?><br>
+							<input type="submit" name="logout" id="logout" class="btn btn-default" value="Log Out"></form><?
+					}?>
             </div>
           </div>
         </div>
@@ -86,40 +127,47 @@ $searchtype = $_POST["searchlist"];
 	<div id="backg">
 		<br><br><br><br><br><br>
 	</div>
-	<div id="search">
-		<form action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
-			<input type="text" id="atextsearch" name="atextsearch">
-			<select name="searchlist">
-				<option selected="selected">Select Type</option>
-				<option value="keyword">Keyword</option>
-				<option value="author">Author</option>
-				<option value="title">Title</option>
-				<option vaule="subject">Subject</option>
+	<div class="container" id="testing">
+		<h2>Search for Materials</h2>
+		<form role="form" action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
+			<div class="form-group">
+			Search: <input type="text" id="atextsearch" name="atextsearch" class="form-control">
+			*Type: <br><select name="searchType" id="searchType">
+				<option selected="selected"></option>
+				<option value="Book">Book</option>
+				<option value="DVD">DVD</option>
+				<option value="MCD">Music CD</option>
+				<option value="BCD">Book CD</option>
 			</select>
-			<input type="submit" value="Search" id="asearch">
+		</div>
+		<input type="submit" value="Search" id="asearch" class="btn btn-default">
 		</form>
 	</div>		
-	<div id="resultsearch">
+	<div class="container" id="myResults">
+		<?php 
+		if(isset($searchtype)){
+		?>
 		<p><br>
 			<?php if(isset($searchtype)){echo "You have searched " . $searchtype . " " . $searchterm . ".";}?></p>
-	</div>
-	<div>
-		<?php if(isset($searchtype)){?>
-		<table border="1" style="width:75%">
+			<h2>Results</h2>
+		<table class="table table-bordered" id="resultList">
 			<thead><tr>
-				<td>Title</td>
-				<td>Author</td>
-				<td>Type</td>
-				<td>Other</td>
-			</thead></tr>
-			<tr>
-				<td><?php echo $searchterm;?></td>
-				<td>Author</td>
-				<td>Music</td>
-				<td>CD</td>
-			</tr>
+				<th>Title</th>
+				<th>Author</th>
+				<th>Genre</th>
+				<th>ISBN</th>
+				<th>Availability</th>
+			</tr></thead>
+			<tbody id="listThem">
+			</tbody>
 		</table>
-		<?php }?>	
+		<?php echo $data;}
+		else{
+			?><p>*You must select a type.</p><?php
+			echo $_SESSION['security'];
+			echo $_SESSION['email'];
+		}
+		?>	
 	</div>
   </body>
 </html>
