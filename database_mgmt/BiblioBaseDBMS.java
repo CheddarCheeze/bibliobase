@@ -121,13 +121,13 @@ public class BiblioBaseDBMS {
                         alterCheck(word);
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid ALTER command length");
-                    }
+                    }   break;
                 case "TRUNCATE":
                     if(word.size() == 3){
                         truncateCheck(word);
                     }else{
                         throw new IllegalArgumentException("ERROR: TRUNCATE should have 3 words");
-                    }
+                    }   break;
                 case "EXIT":
                     break;
                 default:
@@ -161,7 +161,7 @@ public class BiblioBaseDBMS {
         int tI = -1;
         
         //check is second word is "TABLE"
-        w = word.get(1);
+        w = word.get(1).toUpperCase();
         if(!w.equals("TABLE")){
             throw new IllegalArgumentException("ERROR: 2nd word should be \'TABLE\' for ALTER command");
         }
@@ -173,9 +173,10 @@ public class BiblioBaseDBMS {
             tableName = w;
         }else{
             tI = tableSearch(w);
+            tableName = w;
         }
         //Check for DROP behavior and act
-        w = word.get(3);
+        w = word.get(3).toUpperCase();
         if(w.equals("DROP")){
             if(word.size() != 5){
                 throw new IllegalArgumentException("ERROR: too many words for DROP column in ALTER command");
@@ -188,18 +189,21 @@ public class BiblioBaseDBMS {
         }
         //Check for RENAME behavior and set
         if(w.equals("RENAME")){
-            if(word.size() != 6){
-                throw new IllegalArgumentException("ERROR: too many words for RENAME column in ALTER command");
-            }
-            w = word.get(4);
+            w = word.get(4).toUpperCase();
             if(w.equals("COLUMN")){
-                if(!isValue(word.get(5)) || !isValue(word.get(6))){
-                    throw new IllegalArgumentException("ERROR: last two words are not values for ALTER RENAME COLUMN");
+                if(word.size() != 8){
+                    throw new IllegalArgumentException("ERROR: ALTER TABLE RENAME COLUMN command has invalid size");
+                }
+                if(!isValue(word.get(5)) || !word.get(6).toUpperCase().equals("TO") || !isValue(word.get(7))){
+                    throw new IllegalArgumentException("ERROR: last three words must be types: value, command, value");
                 }
                 tI = tableSearch(tableName);
-                TABLES.get(tI).insertAttribute(word.get(5), word.get(6));
+                TABLES.get(tI).renameAttribute(word.get(5), word.get(7));
                 return;
             }else if(w.equals("TO")){
+                if(word.size() != 6){
+                    throw new IllegalArgumentException("ERROR: ALTER TABLE RENAME TO has invalid length");
+                }
                 if(!filesystem.renameTable(tableName, word.get(5), DATABASE_NAME)){
                     throw new IllegalArgumentException("ERROR: another table already has that name");
                 }
@@ -233,7 +237,7 @@ public class BiblioBaseDBMS {
                     if(!isValue(word.get(i))){
                         throw new IllegalArgumentException("ERROR: column information cannot be system words");
                     } //for even word, check if it's closed in single quotes
-                    if((i & 1) == 0){   //check low bit for even-ness
+                    if((i & 1) == 1){   //check low bit for odd-ness
                         attName = word.get(i); //remove single quotes
                     }
                     else{
@@ -246,8 +250,8 @@ public class BiblioBaseDBMS {
                 if(!word.get(word.size()-1).equals(")")){
                     throw new IllegalArgumentException("ERROR: missing close parenthesis");
                 }
-                for(Attribute col : TABLES.get(tI).getAttributes()){
-                    TABLES.get(tI).insertAttribute(col);
+                for(int i = 0; i < columns.size(); i++){
+                    TABLES.get(tI).insertAttribute(columns.get(i));
                 }
                 return;
             }
@@ -508,6 +512,21 @@ public class BiblioBaseDBMS {
         int tI = 0;  //index for current table insertion will be occuring in
         ArrayList<Integer> I = null;
         
+        //checks if second word is *
+        if(word.get(1).equals("*")){
+            if(word.size() == 4 && word.get(2).toUpperCase().equals("FROM") &&
+                    isValue(word.get(3))){
+                tI = tableSearch(word.get(3));
+                int size = TABLES.get(tI).getNumRecords();
+                for(int i = size - 1; i >= 0; i--){
+                    TABLES.get(tI).deleteRecord(i);
+                }
+                return;
+            }else{
+                throw new IllegalArgumentException("ERROR: DELETE * ... has an invalid format");
+            }
+        }
+        
         //checks if second word is FROM
         if(!word.get(1).toUpperCase().equals("FROM")){
             throw new IllegalArgumentException("ERROR: invalid command \""+
@@ -522,8 +541,8 @@ public class BiblioBaseDBMS {
         //checks if the command is only 3 words long, if so delete all records.
         if(word.size() == 3){
             int size = TABLES.get(tI).getNumRecords();
-            for(int i = 0; i < size; i++){
-                TABLES.get(tI).deleteRecord(0);
+            for(int i = size - 1; i >= 0; i--){
+                TABLES.get(tI).deleteRecord(i);
             }
             return; //exit function
         }
@@ -771,6 +790,8 @@ public class BiblioBaseDBMS {
         //return list of sorted row indexes
         I = new ArrayList(set); 
         Collections.sort(I);    //mergesort list of row indexes
+        
+        //test to see if WHERE actually found anything
         return I;
     }
     
@@ -992,7 +1013,7 @@ public class BiblioBaseDBMS {
         boolean foundInMemory = false;
         int tI = 0; //index for table
             for(int i = 0; i < TABLES.size() && !foundInMemory; i++){
-                if(TABLES.get(i).getName().toUpperCase().equals(tableName.toUpperCase())){
+                if(TABLES.get(i).getName().equals(tableName)){
                     foundInMemory = true;
                     tI = i;
                 }
@@ -1064,7 +1085,7 @@ public class BiblioBaseDBMS {
     }
     
     static boolean isOperator(String str){
-        return str.matches("[/*+-=<>]|<=|>=|!=");
+        return str.matches("/|\\*|\\+|-|=|<|>|<=|>=|!=");
     }
     
     static boolean isLogicOp(String str){
