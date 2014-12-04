@@ -95,13 +95,16 @@ public class filesystem
 		}
 		i++; //skips the first parenthesis
 		//starts storing records
+                int attIdx = 0;
 		while(!temp[i].equals(")"))
-		{
+		{   
 			//saves entire array of strings as one, e.g. "Happy Birthday"
+                        attIdx %= attributes.size();
 			if(temp[i].startsWith("\""))
 			{
-				if(temp[i].endsWith("\""))
-					record.add(new Field(temp[i].substring(1,temp[i].length()-1)));
+				if(temp[i].endsWith("\"")){
+                                        record.add( new Field(temp[i].substring(1,temp[i].length()-1), attributes.get(attIdx).getType()) );
+                                }
 				else
 				{
 					int j = i+1;
@@ -112,7 +115,7 @@ public class filesystem
 						j++;
 					}
 					word += temp[j].substring(0,temp[j].length()-1);
-					record.add(new Field(word));
+					record.add(new Field(word, attributes.get(attIdx).getType()));
 					i = j;
 				}
 			}
@@ -122,8 +125,10 @@ public class filesystem
 				record = new ArrayList<>();
 			}
 			i++;
+                        attIdx++;
 		}
-                recordlist.add(record);
+                if(!record.isEmpty())
+                    recordlist.add(record);
 		/*//print out arraylists for checking
             for(String value : attributeNames)
                     System.out.print(value + " ");
@@ -375,10 +380,12 @@ public class filesystem
 	//done
 	static boolean renameTable(String oldname, String newname, String dbname)
 	{
-		InputStream dbfile = BiblioBaseDBMS.class.getResourceAsStream(dbname+".txt");
-		if(dbfile == null){
-            throw new IllegalArgumentException("ERROR: no such database found");
-        }
+		InputStream dbfile = null;
+                try {
+                        dbfile = new FileInputStream("databases/"+dbname+".txt");
+                } catch (FileNotFoundException ex) {
+                        Logger.getLogger(filesystem.class.getName()).log(Level.SEVERE, null, ex);
+                }
 		boolean foundtbl = false;
 		Scanner inputF = new Scanner(dbfile);
 		ArrayList<String> othertbls = new ArrayList<>();

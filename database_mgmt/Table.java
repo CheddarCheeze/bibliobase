@@ -6,6 +6,7 @@ public class Table{
     private String name;
     private ArrayList<Attribute> attributes;
     private ArrayList<ArrayList<Field>> records;
+    private int maxPrimaryKey;
      
     public Table(String name, ArrayList<Attribute> cols, 
             ArrayList<ArrayList<Field>> rows){
@@ -26,6 +27,7 @@ public class Table{
         this.name = other.getName();
         this.attributes = new ArrayList<Attribute>(other.getAttributes());    //not deep------------------------
         this.records = other.getRecords();
+        setPrimaryKey();
     }
     
     public void setTableName(String name){
@@ -72,6 +74,17 @@ public class Table{
         return false;
     }
     
+    public void renameAttribute(String oldName, String newName){
+        if(this.nameInAttributes(newName)){
+            throw new IllegalArgumentException("ERROR: attribute name already in attributes");
+        }
+        for(Attribute a : this.attributes){
+            if(a.getName().equals(oldName)){
+                a.setName(newName);
+            }
+        }
+    }
+    
     public void updateRecord(int row, int col, Field value){
         if( (row > -1 && row < this.getNumRecords()) &&
                 (col > -1 && col < this.getNumAttributes()) &&
@@ -84,19 +97,17 @@ public class Table{
     }
     
     private void setPrimaryKey(){
-        if(this.attributes.size() > 0 && 
-                this.attributes.get(0).getName().equals("ID")){
-            return;
-        }
-        else{
+        if( !(this.attributes.size() > 0 && 
+                this.attributes.get(0).getName().equals("ID"))){
             this.attributes.add(0, new Attribute("ID", "FLOAT"));
         }
-        if(this.records.size() != 0){
-            String value;
-            for(int i = 0; i < this.records.size(); i++){
-                value = Integer.toString(i);
-                this.records.get(i).add(0, new Field(value, "FLOAT"));
-            }
+        if(this.records.size() == 0){
+            this.maxPrimaryKey = -1;
+        }
+        else{
+            Field finalPrimary = this.records.get(this.records.size()-1).get(0);
+            int value = Integer.parseInt(finalPrimary.getValue());
+            this.maxPrimaryKey = value;
         }
     }
     
@@ -111,30 +122,25 @@ public class Table{
         }
         
         //find primary key number for record to be inserted
-        for(ArrayList<Field> rec : this.records){
-            if(rec.get(0).getValue() != null){
-                value = Integer.parseInt(rec.get(0).getValue()) + 1;
-                val = Integer.toString(value);
-            }else{
-                val = "0";
-            }
-        }
-        if(val == null){
-            val = "0";
-        }
-        
+        value = this.maxPrimaryKey + 1;
+        val = Integer.toString(value);
+
+        //add ID field,  add record to records, then set new maxPrimaryKey
         f = new Field(val,"FLOAT");
         record.get(0).setField(f);
         this.records.add(record);
+        this.setPrimaryKey();
+        
     }
     
     public void deleteRecord(int i){
         if(i < this.records.size() && i >= 0){  
-           this.records.get(i).get(0).setValue(null);
+           this.records.remove(i);
         }
         else{
             throw new IllegalArgumentException("ERROR: invalid record/index number");
         }
+        this.setPrimaryKey();
     }
     
     public void deleteAttribute(String s){

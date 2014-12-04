@@ -22,7 +22,7 @@ public class Field{
     }
     
     public void setField(String value, String type){
-        if(value == null || value.equals("NULL")){
+        if(value == null || value.toUpperCase().equals("NULL")){
             this.value = null;
             this.type = type;
         }
@@ -44,7 +44,7 @@ public class Field{
     }
     
     public void setField(String value){
-        if(value == null || value.equals("NULL")){
+        if(value == null || value.toUpperCase().equals("NULL")){
             throw new IllegalArgumentException("ERROR: this Field method does not accept null as argument");
         }
         else if(Date.checkIfDate(value)){
