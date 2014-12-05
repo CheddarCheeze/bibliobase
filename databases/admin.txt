@@ -1,0 +1,2 @@
+cat ID FLOAT table STRING ( "0" "sysdatabases" )
+sysdatabases ID FLOAT name STRING ( "1" "Test" )
