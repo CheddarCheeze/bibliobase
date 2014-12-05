@@ -63,10 +63,10 @@ public class filesystem
 	//done
 	static boolean renameDb(String olddb, String newdb)
 	{
-		File oldfile = new File("database/" + olddb + ".txt");
-		File newfile = new File("database/" + newdb + ".txt");
+		File oldfile = new File("databases/" + olddb + ".txt");
+		File newfile = new File("databases/" + newdb + ".txt");
 		if(!oldfile.exists()){
-            throw new IllegalArgumentException("ERROR: no such database found");
+                        throw new IllegalArgumentException("ERROR: no such database found");
         }
 		if(oldfile.renameTo(newfile))
 		{

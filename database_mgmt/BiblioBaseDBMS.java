@@ -21,7 +21,7 @@ public class BiblioBaseDBMS {
 
     static ArrayList<Table> TABLES;
     static String DATABASE_NAME;
-    static boolean MAX_LOGIN;
+    static boolean CONSOLE_FORMATTING;
     static boolean CATTING;
     static String CAT_DATABASE_NAME;
     static boolean SYS_ADMIN;
@@ -165,8 +165,26 @@ public class BiblioBaseDBMS {
         String tableName = null;
         int tI = -1;
         
-        //check is second word is "TABLE"
+        //check if second word is "DATABASE"
         w = word.get(1).toUpperCase();
+        if(w.equals("DATABASE") && SYS_ADMIN){
+            if(word.size() != 6){
+                throw new IllegalArgumentException("ERROR: ALTER DATABASE command should have 6 words");
+            }else if(!isValue(word.get(2)) || !isValue(word.get(5))){
+                throw new IllegalArgumentException("ERROR: 3rd and 6th word cannot be a system word");
+            }else if(!word.get(3).toUpperCase().equals("RENAME") || 
+                    !word.get(4).toUpperCase().equals("TO")){
+                throw new IllegalArgumentException("ERROR: 4th and 5th word should be RENAME TO");
+            }else if(!filesystem.renameDb(word.get(2), word.get(5))){
+                throw new IllegalArgumentException("ERROR: cannot rename database to the name of an existing database");
+            }else{
+                parseString("update sysdatabases set name = \'"+word.get(5)+"\' where name = \'"+word.get(2)+"\';");
+                return;
+            }
+        }else if(w.equals("DATABASE")){
+            throw new IllegalArgumentException("ERROR: only system administrator can rename database");
+        }
+        //check is second word is "TABLE"
         if(!w.equals("TABLE")){
             throw new IllegalArgumentException("ERROR: 2nd word should be \'TABLE\' for ALTER command");
         }
@@ -291,6 +309,7 @@ public class BiblioBaseDBMS {
             if(!filesystem.deleteDb(w)){
                 throw new IllegalArgumentException("ERROR: database name not found: cannot be dropped");
             }
+            parseString("delete from sysdatabases where name = \'"+w+"\';");
         }else{
             if(!filesystem.deleteTable(w, DATABASE_NAME)){
                 throw new IllegalArgumentException("ERROR: table name not found: cannot be dropped");
@@ -988,6 +1007,7 @@ public class BiblioBaseDBMS {
             CATTING = true;
             CAT_DATABASE_NAME = word.get(2);
             parseString("create table cat ( 'table' string );");
+            parseString("insert into sysdatabases values (\'"+CAT_DATABASE_NAME+"\');");
             return;
         }else if(word.size() == 3){
              throw new IllegalArgumentException("ERROR: command length is too short for table creation");
@@ -1031,10 +1051,10 @@ public class BiblioBaseDBMS {
         }else
             TABLES.add(T);  //must be added to memory only after determining if table can be created
         //insert new tablename into cat table
-        if(!CATTING & !SYS_ADMIN){
+        if(!CATTING){
             CATTING = true;
-            parseString("insert into cat values("+tableName+");");
-        }else if(CATTING & !SYS_ADMIN){
+            parseString("insert into cat values(\'"+tableName+"\');");
+        }else if(CATTING){
             CATTING = false;
         }
         
@@ -1064,7 +1084,7 @@ public class BiblioBaseDBMS {
     
     static void displayTable(Table table){
         Attribute a;
-        if(MAX_LOGIN){
+        if(CONSOLE_FORMATTING){
             for(int i = 0; i < table.getNumAttributes(); i++){
                 a = table.getAttributes().get(i);
                 System.out.format("%-40s",a.getName());
@@ -1110,14 +1130,14 @@ public class BiblioBaseDBMS {
     }
     
     static boolean isCommand(String str){
-        if(CATTING){
+        if(SYS_ADMIN){
             return str.toUpperCase().matches("CREATE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
                 + "TRUNCATE|DATABASE");
         }
         return str.toUpperCase().matches("CREATE|TABLE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
-                + "TRUNCATE|DATABASE|CAT");
+                + "TRUNCATE|DATABASE|CAT|SYSDATABASES");
     }
     
     static boolean isOperator(String str){
@@ -1145,25 +1165,29 @@ public class BiblioBaseDBMS {
         if(usr.length() > 1 && usr.substring(0, 1).equals("-")){
             //check if admin
             if(usr.substring(1, usr.length()).toUpperCase().equals("ADMIN")){
+                DATABASE_NAME = usr.substring(1, usr.length());
+                CONSOLE_FORMATTING = true;
                 SYS_ADMIN = true;
                 return true;
             }
             //check if username is in database
             if(filesystem.searchDb(usr.substring(1, usr.length()))){
                 DATABASE_NAME = usr.substring(1, usr.length());
-                MAX_LOGIN = true;
+                CONSOLE_FORMATTING = true;
                 return true;
             }
         }else if(usr.length() > 0){
             //check if admin
             if(usr.toUpperCase().equals("ADMIN")){
+                DATABASE_NAME = usr;
+                CONSOLE_FORMATTING = false;
                 SYS_ADMIN = true;
                 return true;
             }
             //check if username is in database
             if(filesystem.searchDb(usr)){
                 DATABASE_NAME = usr;
-                MAX_LOGIN = false;
+                CONSOLE_FORMATTING = false;
                 return true;
             }
         }
