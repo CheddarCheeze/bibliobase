@@ -64,17 +64,17 @@
                 </li>
 				<li><a href="search.php">Search</a></li>
               </ul>
-              <form class="navbar-form navbar-right" action="security/bblogin.php" role="search">
+              <form class="navbar-form navbar-right" action="security/bblogin_temp.php" role="search">
                     <div class="form-group">
                         <input type="text" class="form-control" name="username" placeholder="Username">
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control" name="password" placeholder="Password">
+                        <input type="password" class="form-control" name="password" placeholder="Password">
                     </div>
                     <label class="checkbox">
           <input type="checkbox" value="remember-me"> Remember me
           </label>
-                    <button type="submit" onclick="check(this.form)" class="btn btn-default">Sign In</button>
+                    <button type="submit" onclick="check(this.form)" class="btn btn-default" value="login">Sign In</button>
                 </form>
             </div>
           </div>
