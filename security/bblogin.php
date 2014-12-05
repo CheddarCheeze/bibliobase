@@ -1,18 +1,10 @@
+<?php session_start(); ?>
+
 <script type="text/javascript" src ="BBscript.js"></script>
 
 <div id="content">
-
-<?php session_start(); ?>
+<html><head>
 <title>Bibliobase Login</title>
-<html><body><fieldset>
-	<h2>Member login</h2>
-	<a href="accounts.json">Debugging-Accounts List</a>
-	<form action = "<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
-	Username:<br><input type ="text" name = "username"><br>
-	Password:<br><input type ="password" name = "password"><br>
-	<input type = "submit" value = "Login" style="background-color: #336699; color: #ffffff;" name = "login" onmouseover="Bfocus(this,1)" onmouseout = "Bfocus(this,2)">
-</form></fieldset></body></html>
-
 <?php
 function CheckAccounts($username,$password){
 $useraccounts = json_decode(file_get_contents("accounts.json"));
@@ -20,6 +12,7 @@ $useraccounts = json_decode(file_get_contents("accounts.json"));
 		for($i=0;$i<count($useraccounts);$i++){
 			if($useraccounts[$i]->username == $username && $useraccounts[$i]->password == $password){
 				$_SESSION['email'] = $useraccounts[$i]->email;
+				$_SESSION['security'] = $useraccounts[$i]->seclevel;
 				return true;		
 			}
 		}
@@ -35,7 +28,7 @@ if(isset($_POST['login'])){
 		$check = CheckAccounts($username,$password);
 		if($check==true){
 			$_SESSION['username'] = $username;
-			header("Location:members.php");
+			?><meta http-equiv="refresh" content="1; url="../first.php"><?php;
 			exit;
 		}
 		else{
@@ -44,6 +37,16 @@ if(isset($_POST['login'])){
 	}
 }
 ?>
+</head>
+<body><fieldset>
+	<h2>Member login</h2>
+	<a href="accounts.json">Debugging-Accounts List</a>
+	<form action = "<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
+	Username:<br><input type ="text" name = "username"><br>
+	Password:<br><input type ="password" name = "password"><br>
+	<input type = "submit" value = "Login" style="background-color: #336699; color: #ffffff;" name = "login" onmouseover="Bfocus(this,1)" onmouseout = "Bfocus(this,2)">
+</form></fieldset></body></html>
+
 
 </br></br></br>
 <html><body><fieldset>
