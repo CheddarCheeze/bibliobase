@@ -411,7 +411,7 @@ public class BiblioBaseDBMS {
     
     static Table innerJoin(int tI, int tI2, String col1, String operator,
             String col2){
-        //UNDER_CONSTRUCTION
+        //---------------------------------UNDER_CONSTRUCTION--------------------------
         ArrayList<ArrayList<Field>> records = new ArrayList<>();
         ArrayList<Attribute> att1 = TABLES.get(tI).getAttributes();
         ArrayList<Attribute> att2 = TABLES.get(tI2).getAttributes();
@@ -1162,27 +1162,24 @@ public class BiblioBaseDBMS {
                 }
             }
         }else{
-            System.out.print("{");
+            System.out.print("[");
             //print values
-            for(int c = 0; c < table.getNumAttributes(); c++){
-                ArrayList<Field> f = null;
-                a = table.getAttributes().get(c);
-                System.out.print("\""+a.getName().toUpperCase()+"\":[{");
-                for(int r = 0; r < table.getNumRecords(); r++){
-                    f = table.getRecord(r);
-                    if(f.get(0).getValue() != null){
-                        System.out.print("\""+f.get(c).getValue()+"\"");
-                        if(r != table.getNumRecords()-1){
-                            System.out.print(",");
-                        }
-                    }
+            for(int i = 0; i < table.getNumRecords(); i++){
+                System.out.print("{");
+                for(int j = 0; j < table.getNumAttributes(); j++){
+                    String attName = table.getAttribute(j).getName();
+                    String value = table.getRecord(i).get(j).getValue();
+                    if(j == table.getNumAttributes()-1)
+                        System.out.print(" \""+attName+"\": \""+value+"\"");
+                    else
+                        System.out.print(" \""+attName+"\": \""+value+"\",");
                 }
-                if(c != table.getNumAttributes()-1)
-                    System.out.print("}],");
+                if(i == table.getNumRecords()-1)
+                    System.out.print("}");
                 else
-                    System.out.print("}]");
+                    System.out.print("}, ");
             }
-            System.out.print("}");
+            System.out.print("]");
         }
         System.out.println();
     }
