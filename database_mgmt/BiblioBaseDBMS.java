@@ -409,6 +409,23 @@ public class BiblioBaseDBMS {
         }
     }
     
+    static int innerJoin(int tI, int tI2, String col1, String operator,
+            String col2){
+        //UNDER_CONSTRUCTION
+        ArrayList<ArrayList<Field>> records = new ArrayList<>();
+        ArrayList<Attribute> att1 = TABLES.get(tI).getAttributes();
+        ArrayList<Attribute> att2 = TABLES.get(tI2).getAttributes();
+        if(TABLES.get(tI).getNumAttributes() != TABLES.get(tI2).getNumAttributes()){
+            throw new IllegalArgumentException("ERROR: number of table attributes don't match");
+        }
+        for(int i = 0; i < TABLES.get(tI).getNumAttributes(); i++){
+            for(int j = i; j < TABLES.get(tI2).getNumAttributes(); j++){
+                if(att1.get(i).isEqual(att2.get(j))){
+                }
+            }
+        }
+    }
+    
     static void selectCheck(ArrayList<String> word){
         String tableName = new String();
         String attName = new String();
@@ -466,6 +483,45 @@ public class BiblioBaseDBMS {
         if(wP == word.size() && selectAll){
             displayTable(TABLES.get(tI));   //execute basic select display
             return;
+        }
+        //check for INNER JOIN condition--------------------------------------------UNDER_CONSTRUCTION-----------
+        if(word.get(wP).toUpperCase().equals("INNER")){
+            String table2;
+            String col1 = null;
+            String operator = null;
+            String col2 = null;
+            int tI2;
+            wP++;
+            if(!word.get(wP).toUpperCase().equals("JOIN")){
+                throw new IllegalArgumentException("ERROR: JOIN word not found after INNER");
+            }
+            wP++;
+            table2 = word.get(wP);
+            if(!isValue(table2)){
+                throw new IllegalArgumentException("ERROR: word after INNER must be a table value not a system word");
+            }else{
+                tI2 = tableSearch(table2);
+            }
+            wP++;
+            if(!word.get(wP).toUpperCase().equals("ON")){
+                throw new IllegalArgumentException("ERROR: INNER JOIN word after table2 name must be ON");
+            }
+            wP++;
+            col1 = word.get(wP);
+            if(!isValue(col1)){
+                throw new IllegalArgumentException("ERROR: INNER JOIN first column must not be a system word");
+            }
+            wP++;
+            operator = word.get(wP);
+            if(!isOperator(operator)){
+                throw new IllegalArgumentException("ERROR: INNER JOIN does not have operator in correct location");
+            }
+            wP++;
+            col2 = word.get(wP);
+            if(!isValue(col2)){
+                throw new IllegalArgumentException("ERROR: INNER JOIN second column must not be a system word");
+            }
+            tI = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
         }
         //get attributes and attribute indexes
         if(selectAll){
