@@ -30,6 +30,12 @@ public class Table{
         setPrimaryKey();
     }
     
+    private void setAttributeTable(){
+        for(Attribute att : this.attributes){
+            att.setTable(this.name);
+        }
+    }
+    
     public void setTableName(String name){
         this.name = name;
     }
@@ -53,7 +59,7 @@ public class Table{
     }
     
     public void insertAttribute(String name, String type){
-        this.attributes.add(new Attribute(name, type)); //Attribute class throws exception if type is invalid
+        this.attributes.add(new Attribute(name, type, this.name)); //Attribute class throws exception if type is invalid
         for(ArrayList<Field> rec : this.records){
             rec.add(new Field(null, type));
         } 

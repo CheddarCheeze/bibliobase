@@ -409,7 +409,7 @@ public class BiblioBaseDBMS {
         }
     }
     
-    static int innerJoin(int tI, int tI2, String col1, String operator,
+    static Table innerJoin(int tI, int tI2, String col1, String operator,
             String col2){
         //UNDER_CONSTRUCTION
         ArrayList<ArrayList<Field>> records = new ArrayList<>();
@@ -424,9 +424,11 @@ public class BiblioBaseDBMS {
                 }
             }
         }
+        return null;
     }
     
     static void selectCheck(ArrayList<String> word){
+        Table superTable = null;
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -521,7 +523,7 @@ public class BiblioBaseDBMS {
             if(!isValue(col2)){
                 throw new IllegalArgumentException("ERROR: INNER JOIN second column must not be a system word");
             }
-            tI = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
+            superTable = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
         }
         //get attributes and attribute indexes
         if(selectAll){
