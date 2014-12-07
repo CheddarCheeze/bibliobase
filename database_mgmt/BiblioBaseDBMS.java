@@ -1167,7 +1167,7 @@ public class BiblioBaseDBMS {
             for(int i = 0; i < table.getNumRecords(); i++){
                 System.out.print("{");
                 for(int j = 0; j < table.getNumAttributes(); j++){
-                    String attName = table.getAttribute(j).getName();
+                    String attName = table.getAttribute(j).getName().toLowerCase();
                     String value = table.getRecord(i).get(j).getValue();
                     if(j == table.getNumAttributes()-1)
                         System.out.print(" \""+attName+"\": \""+value+"\"");
