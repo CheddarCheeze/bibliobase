@@ -14,7 +14,7 @@ if($_POST['logout']){
 }
 
 //setting path name to variable
-$path = dirname(__FILE__);
+$path = dirname(dirname(__FILE__));
 
 //run javac on BibliobaseDBMS.java once
 $count = 0;
