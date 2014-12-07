@@ -1,5 +1,37 @@
 <?php 
-session_start()
+session_start();
+
+//if not logged in set security settings to guest
+if(!isset($_SESSION['username'])){
+	$_SESSION['security'] = "guest";
+}
+
+//if logout button is clicked, supposed to unset login info
+//currently doesn't work...
+if($_POST['logout']){
+	//unset($_SESSION['username'], $_SESSION['security'], $_SESSION['email']);
+	session_destroy();
+}
+
+//setting path name to variable
+//$path = dirname(dirname(__FILE__));
+$path = dirname(__FILE__);
+
+//run javac on BibliobaseDBMS.java 
+//exec("javac database_mgmt/BiblioBaseDBMS.java");
+
+if($_POST["addConfirm"]){
+	$title = $_POST["title"];
+	$author = $_POST["author"];
+	$genre = $_POST["genre"];
+	$isbn = $_POST["idenification"];
+	$type = $_POST["type"];
+	$num = $_POST["number"];
+	$avail = "True";
+	
+	$output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into $type values (\"$title\", \"$author\", \"$genre\", \"$isbn\", \"$avail\");\"");
+}
+	
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +41,9 @@ session_start()
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
+	
     <link rel="icon" href="favicon.ico">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 
     <title>Software Engineering Project</title>
 
@@ -19,6 +53,16 @@ session_start()
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	
+	<script>
+	function turnOff()
+	{
+		document.getElementById("addForm").style.visibility = "hidden";
+	}
+	</script>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -34,11 +78,8 @@ session_start()
 		background-size: 100% 100px;
 		background-repeat: no-repeat;
 	}
-	#search {
-		position: aboslute;
-	}
 	</style>
-  </head>
+	</head>
 <!-- NAVBAR
 ================================================== -->
   <body>
@@ -110,7 +151,7 @@ session_start()
 						?>
 						<form  name="logout" class="navbar-form navbar-right" action="index.html">
 							Welcome, <?php echo $_SESSION['username'];?><br>
-							<button class="btn btn-default" name="logout"><a href="logout.php">Log Out</a></button></form><?
+							<input type="submit" name="logout" id="logout" class="btn btn-default" value="Log Out"></form><?
 					}?>
             </div>
           </div>
@@ -121,8 +162,36 @@ session_start()
 	<div id="backg">
 		<br><br><br><br><br><br>
 	</div>
-	<div id="homepage">
-		<p>This is where your favorites and such will be. This is also where the last <br> things you checked out will be if you are a patron.</p>
+	<div class="container">
+		<h2>Add Materials</h2>
+	</div>
+	<div class="container">
+		<p id="addForm">Please fill out all fields.
+		<form role="form" action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
+			<div class="form-group">
+			<label>Type:</label>
+			<br><select name="type" id="type">
+				<option selected="selected"></option>
+				<option value="Book">Book</option>
+				<option value="DVD">DVD</option>
+				<option value="MCD">Music CD (MCD)</option>
+				<option value="BCD">Book CD (BCD)</option>
+			</select><br>
+			<label>Title:</label>
+			<input type="text" name="title" id="title" class="form-control">
+			<label name="labelAuthor">Author/Director:</label>
+			<input type="text" name="author" id="author" class="form-control">
+			<label>Genre:</label>
+			<input type="text" name="genre" id="genre" class="form-control">
+			<label>ISBN:</label>
+			<input type="text" name="idenification" id="idenification" class="form-control">
+			<label>Number of Copies:</label>
+			<input type="text" name="number" id="number" class="form-control">
+		</div>
+			<input type="submit" value="Add" name="addConfirm" id="addConfirm" class="btn btn-default" onclick="turnOff()">
+		</form>
+		<?php echo "$output";?>
+	</p>
 	</div>
   </body>
 </html>

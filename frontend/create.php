@@ -1,5 +1,56 @@
 <?php 
-session_start()
+session_start();
+
+//if not logged in set security settings to guest
+if(!isset($_SESSION['username'])){
+	$_SESSION['security'] = "guest";
+}
+
+//setting path name to variable
+//$path = dirname(dirname(__FILE__));
+$path = dirname(__FILE__);
+
+//run javac on BibliobaseDBMS.java once
+//exec("javac database_mgmt/BiblioBaseDBMS.java");
+	
+//sets variable to search text field if set and if not to *
+if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
+	$searchterm = "*";
+}
+else
+{
+	$searchterm = $_POST["atextsearch"];
+}
+
+//set variables to search type {book, dvd, music cd, book cd}
+$searchtype = $_POST["searchType"];
+
+//set variable for search by field
+if(!isset($_POST["searchKind"]) || $_POST["searchKind"] == null){
+	$searchkind = "title";
+}
+else{
+	$searchkind = $_POST["searchKind"];
+}
+
+
+//when search button is clicked run program to connect to database
+if($_POST["asearch"]){
+	if($searchterm == "*"){
+		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype;\"");
+		$data = json_decode($output, TRUE);
+	}
+	else{
+		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype where $searchkind = '$searchterm';\"");
+		$data = json_decode($output, TRUE);
+	}
+	
+}
+
+if($_POST["checkOut"]){
+	//do something here to check the book out :) not implemented yet
+}
+	
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,6 +61,7 @@ session_start()
     <meta name="description" content="">
     <meta name="author" content="">
     <link rel="icon" href="favicon.ico">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 
     <title>Software Engineering Project</title>
 
@@ -19,6 +71,10 @@ session_start()
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -34,11 +90,8 @@ session_start()
 		background-size: 100% 100px;
 		background-repeat: no-repeat;
 	}
-	#search {
-		position: aboslute;
-	}
 	</style>
-  </head>
+	</head>
 <!-- NAVBAR
 ================================================== -->
   <body>
@@ -121,8 +174,9 @@ session_start()
 	<div id="backg">
 		<br><br><br><br><br><br>
 	</div>
-	<div id="homepage">
-		<p>This is where your favorites and such will be. This is also where the last <br> things you checked out will be if you are a patron.</p>
+	<div class="container" id="testing">
+	</div>		
+	<div class="container" id="myResults">
 	</div>
   </body>
 </html>

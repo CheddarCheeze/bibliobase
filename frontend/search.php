@@ -6,23 +6,13 @@ if(!isset($_SESSION['username'])){
 	$_SESSION['security'] = "guest";
 }
 
-//if logout button is clicked, supposed to unset login info
-//currently doesn't work...
-if($_POST['logout']){
-	//unset($_SESSION['username'], $_SESSION['security'], $_SESSION['email']);
-	session_unset();
-}
-
 //setting path name to variable
-$path = dirname(dirname(__FILE__));
+//$path = dirname(dirname(__FILE__));
+$path = dirname(__FILE__);
 
 //run javac on BibliobaseDBMS.java once
-$count = 0;
-if($count == 0){
-	exec("javac database_mgmt/BiblioBaseDBMS.java");
-	$count = 1;
-}
-
+//exec("javac database_mgmt/BiblioBaseDBMS.java");
+	
 //sets variable to search text field if set and if not to *
 if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
 	$searchterm = "*";
@@ -138,6 +128,11 @@ if($_POST["checkOut"]){
 					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
                     <li><a href="add.php">Add Material</a></li>
 					<li><a href="#">Delete Material</a></li>
+					<?php }
+					if($_SESSION['security'] == "Administrator"){
+					?>
+					<li><a href="create.php">Create Table</a></li>
+					<li><a href="#">Modify Table</a></li>
 					<?php }?>
                     <li class="divider"></li>
                     <li class="dropdown-header">Help/Services</li>
@@ -168,7 +163,7 @@ if($_POST["checkOut"]){
 						?>
 						<form  name="logout" class="navbar-form navbar-right" action="index.html">
 							Welcome, <?php echo $_SESSION['username'];?><br>
-							<input type="submit" name="logout" id="logout" class="btn btn-default" value="Log Out"></form><?
+							<button class="btn btn-default" name="logout"><a href="logout.php">Log Out</a></button></form><?
 					}?>
             </div>
           </div>
