@@ -16,8 +16,12 @@ if($_POST['logout']){
 //setting path name to variable
 $path = dirname(__FILE__);
 
-//run javac on BibliobaseDBMS.java
-exec("javac database_mgmt/BiblioBaseDBMS.java");
+//run javac on BibliobaseDBMS.java once
+$count = 0;
+if($count == 0){
+	exec("javac database_mgmt/BiblioBaseDBMS.java");
+	$count = 1;
+}
 
 //sets variable to search text field if set and if not to *
 if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
@@ -28,13 +32,29 @@ else
 	$searchterm = $_POST["atextsearch"];
 }
 
-//set variable to search type {book, dvd, music cd, book cd}
+//set variables to search type {book, dvd, music cd, book cd}
 $searchtype = $_POST["searchType"];
+
+//set variable for search by field
+if(!isset($_POST["searchKind"]) || $_POST["searchKind"] == null){
+	$searchkind = "title";
+}
+else{
+	$searchkind = $_POST["searchKind"];
+}
+
 
 //when search button is clicked run program to connect to database
 if($_POST["asearch"]){
-	$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype;\"");
-	$data = json_decode($output, TRUE);
+	if($searchterm == "*"){
+		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype;\"");
+		$data = json_decode($output, TRUE);
+	}
+	else{
+		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype where $searchkind = '$searchterm';\"");
+		$data = json_decode($output, TRUE);
+	}
+	
 }
 
 if($_POST["checkOut"]){
@@ -164,12 +184,19 @@ if($_POST["checkOut"]){
 		<form role="form" action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
 			<div class="form-group">
 			Search: <input type="text" id="atextsearch" name="atextsearch" class="form-control">
-			*Type: <br><select name="searchType" id="searchType">
+			Search By: <br><select name="searchKind" id="searchKind">
+				<option selected="selected"></option>
+				<option value="title">Title</option>
+				<option value="author">Author</option>
+				<option value="isbn">ISBN</option>
+				<option value="genre">Genre</option>
+			</select>
+			<br>*Type: <br><select name="searchType" id="searchType">
 				<option selected="selected"></option>
 				<option value="Book">Book</option>
 				<option value="DVD">DVD</option>
-				<option value="MCD">Music CD</option>
-				<option value="BCD">Book CD</option>
+				<option value="MCD">Music CD (MCD)</option>
+				<option value="BCD">Book CD (BCD)</option>
 			</select>
 		</div>
 		<input type="submit" value="Search" name="asearch" class="btn btn-default">
@@ -183,9 +210,12 @@ if($_POST["checkOut"]){
 		<p><br>
 			<?php 
 			print "You have searched $searchtype $searchterm.";
-			//echo count($data);
+			if(!isset($data) || $data == null){
+				echo "<p>Did not find any $searchtype $searchterm $searchkind.</p>";
+			}
+			else{
 		?></p>
-			<h2>Results</h2>
+			<h2>Results: <?php echo $searchtype?></h2>
 		<table class="table table-bordered" id="resultList">
 			<thead><tr>
 				<th>Select</th>
@@ -214,13 +244,13 @@ if($_POST["checkOut"]){
 			?>
 		</table>
 		<button type="button" name="checkOut" class="btn btn-default">Check Out</button>
-		<?php }
+		<?php }}
 		else{
 			//displays to remind the person to select a type
 			?><p>*You must select a type.</p><?php
 			//echo $_SESSION['security']; //used these as debug tools
 			//echo $_SESSION['email'];
-			//echo "$path $searchterm ";
+			//echo "\"select * from $searchtype where $searchkind = '$searchterm';\"";
 		}
 		?>	
 	</div>
