@@ -1,21 +1,45 @@
 <?php 
 session_start();
 
+//if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	
 	$_SESSION['security'] = "guest";
 }
 
-
+//if logout button is clicked, supposed to unset login info
+//currently doesn't work...
 if($_POST['logout']){
 	//unset($_SESSION['username'], $_SESSION['security'], $_SESSION['email']);
 	session_unset();
 }
 
-$searchterm = $_POST["atextsearch"];
+//setting path name to variable
+$path = dirname(__FILE__);
+
+//run javac on BibliobaseDBMS.java
+exec("javac database_mgmt/BiblioBaseDBMS.java");
+
+//sets variable to search text field if set and if not to *
+if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
+	$searchterm = "*";
+}
+else
+{
+	$searchterm = $_POST["atextsearch"];
+}
+
+//set variable to search type {book, dvd, music cd, book cd}
 $searchtype = $_POST["searchType"];
-$data = "select " . $searchterm . " " . $searchtype;
-$output = shell_exec('java ');
+
+//when search button is clicked run program to connect to database
+if($_POST["asearch"]){
+	$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype;\"");
+	$data = json_decode($output, TRUE);
+}
+
+if($_POST["checkOut"]){
+	//do something here to check the book out :) not implemented yet
+}
 	
 ?>
 <!DOCTYPE html>
@@ -79,14 +103,19 @@ $output = shell_exec('java ');
               <ul class="nav navbar-nav">
                 <li class="active"><a href="index.html">Home</a></li>
                 <li><a href="#about">About</a></li>
-				<?php if($_SESSION['security'] != "guest"){?>
+				<?php 
+				//only show My Desk if person is logged in
+				if($_SESSION['security'] != "guest"){	
+				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tools <span class="caret"></span></a>
                   <ul class="dropdown-menu" role="menu">
                     <li><a href="search.php">Search</a></li>
-					<?php if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+					<?php 
+					//only show if person logged in is a patron or admin
+					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
                     <li><a href="add.php">Add Material</a></li>
 					<li><a href="#">Delete Material</a></li>
 					<?php }?>
@@ -97,7 +126,10 @@ $output = shell_exec('java ');
                   </ul>
                 </li>
               </ul>
-			  <?php if(!isset($_SESSION['username'])){ ?>
+			  <?php 
+			  //makes the log in form disappear if someone is logged in and changes to
+			  //show Welcome, username with log out button
+			  if(!isset($_SESSION['username'])){ ?>
 	              <form class="navbar-form navbar-right" action="security/bblogin.php" role="search">
 	                    <div class="form-group">
 	                        <input type="text" class="form-control" name="username" placeholder="Username">
@@ -140,32 +172,55 @@ $output = shell_exec('java ');
 				<option value="BCD">Book CD</option>
 			</select>
 		</div>
-		<input type="submit" value="Search" id="asearch" class="btn btn-default">
+		<input type="submit" value="Search" name="asearch" class="btn btn-default">
 		</form>
 	</div>		
 	<div class="container" id="myResults">
 		<?php 
+		//displays if search type has been set
 		if(isset($searchtype)){
 		?>
 		<p><br>
-			<?php if(isset($searchtype)){echo "You have searched " . $searchtype . " " . $searchterm . ".";}?></p>
+			<?php 
+			print "You have searched $searchtype $searchterm.";
+			//echo count($data);
+		?></p>
 			<h2>Results</h2>
 		<table class="table table-bordered" id="resultList">
 			<thead><tr>
+				<th>Select</th>
 				<th>Title</th>
 				<th>Author</th>
 				<th>Genre</th>
-				<th>ISBN</th>
 				<th>Availability</th>
 			</tr></thead>
-			<tbody id="listThem">
+			<?php
+			for($i = 0; $i < count($data); $i++){
+				$isbn = $data[$i]["isbn"];
+				$title = $data[$i]["title"];
+				$author = $data[$i]["author"];
+				$genre = $data[$i]["genre"];
+				$avail = $data[$i]["avail"];
+			?>
+			<tbody id="listThem" name="listThem">
+				<th><input type="checkbox" name="check_list[]" value=<?php echo $isbn?>></th>
+				<th><a href="#"><?php echo $title?></a></th>
+				<th><?php echo $author?></th>
+				<th><?php echo $genre?></th>
+				<th><?php echo $avail?></th>
 			</tbody>
+			<?php
+				}
+			?>
 		</table>
-		<?php echo $data;}
+		<button type="button" name="checkOut" class="btn btn-default">Check Out</button>
+		<?php }
 		else{
+			//displays to remind the person to select a type
 			?><p>*You must select a type.</p><?php
 			//echo $_SESSION['security']; //used these as debug tools
 			//echo $_SESSION['email'];
+			//echo "$path $searchterm ";
 		}
 		?>	
 	</div>
