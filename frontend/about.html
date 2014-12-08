@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="Adrian Ordorica" content="">
+
+    <title>Round About - Bibliobase</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="view/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="view/css/round-about.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<!-- NAVBAR
+================================================== -->
+  <body>
+    <div class="navbar-wrapper">
+      <div class="container">
+
+        <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="index.html">BiblioBase</a>
+            </div>
+            <div class="navbar-collapse collapse">
+              <ul class="nav navbar-nav">
+                <li class="active"><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tools <span class="caret"></span></a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li><a href="search.php">Search</a></li>
+                    <li class="divider"></li>
+                    <li class="dropdown-header">Help/Services</li>
+                    <li><a href="#">Questions?</a></li>
+                    <li><a href="#">Request A Book?</a></li>
+                  </ul>
+                </li>
+              </ul>
+              <form class="navbar-form navbar-right" action="security/bblogin_temp.php" role="search">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="username" placeholder="Username">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" class="form-control" name="password" placeholder="Password">
+                    </div>
+                    <label class="checkbox">
+          <input type="checkbox" value="remember-me"> Remember me
+          </label>
+                    <button type="submit" onclick="check(this.form)" class="btn btn-default" value="login">Sign In</button>
+                </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="container">
+
+        <!-- Introduction Row -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">About Us
+                    <small>Team E</small>
+                </h1>
+                <p>Brought together for the software engineering course project, we put our skills to the test and created Bibliobase. Combining our various skills and expertise, we created this web application for better organization across libraries everywhere.</p>
+            </div>
+        </div>
+
+        <!-- Team Members Row -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="page-header">Our Team</h2>
+            </div>
+            <div class="col-lg-3 col-sm-6 text-center">
+                <img class="img-circle img-responsive center-block" src="view/images/susan.jpg" alt="">
+                <h3>Susan Everett<br>
+                    <small>User Interface Developer</small>
+                </h3>
+                <p>Created user interactions to search, create, modify, add, and delete databases depending on security level.</p>
+            </div>
+            <div class="col-lg-3 col-sm-6 text-center">
+                <img class="img-circle img-responsive center-block" src="view/images/adrian.jpg" alt="">
+                <h3>Adrian Ordorica<br>
+                    <small>Visual & Mobile Developer</small>
+                </h3>
+                <p>Developed user experience through visual stimulus and mobile design development of a more user-friendly site.</p>
+            </div>
+            <div class="col-lg-3 col-sm-6 text-center">
+                <img class="img-circle img-responsive center-block" src="view/images/chase.jpg" alt="">
+                <h3>Chase Ross<br>
+                    <small>File System Engineer</small>
+                </h3>
+                <p>Secured the system with through the file sytem that interacted between the frontend and backed of the web application.</p>
+            </div>
+            <div class="col-lg-3 col-sm-6 text-center">
+                <img class="img-circle img-responsive center-block" src="view/images/carl.jpg" alt="">
+                <h3>Carl Smith<br>
+                    <small>Database Administrator</small>
+                </h3>
+                <p>Provided an independent user interface to interact with database along with a user-friendly, formatted interface.</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>Copyright &copy; Bibliobase 2014</p>
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+        </footer>
+
+    </div>
+    <!-- /.container -->
+
+    <!-- jQuery -->
+    <script src="view/js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="view/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
