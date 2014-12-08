@@ -100,6 +100,7 @@ public class BiblioBaseDBMS {
                     //if size of command is < 3 words, the command is invalid
                     if(word.size() >= 3){
                         deleteCheck(word);
+                        CATTING = false;
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid DELETE command length");
                     }   break;
@@ -354,7 +355,9 @@ public class BiblioBaseDBMS {
             if(!filesystem.deleteTable(w, DATABASE_NAME)){
                 throw new IllegalArgumentException("ERROR: table name not found: cannot be dropped");
             }
+            CATTING = true;
             TABLES.clear();
+            parseString("delete from cat where table = \'"+w+"\';");
         }
     }
     
