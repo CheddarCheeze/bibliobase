@@ -137,7 +137,7 @@ public class filesystem
 				System.out.println();
 			}
 		*/
-		return new Table(tablename, attributes, recordlist);
+		return new Table(tablename, attributes, recordlist, primarykey);
 	}
 
 	//Returns a string formatted from input Table
@@ -264,7 +264,7 @@ public class filesystem
 			{
 				for(int i = 0; i < othertbls.size(); i++){
 					String var = othertbls.get(i);
-						f1.write(var + "\n");
+					f1.write(var + "\n");
 				}
 				f1.flush();
 				f1.close();
