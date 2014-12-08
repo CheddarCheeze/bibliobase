@@ -33,3 +33,5 @@ delete from Book where author = 'J. K. Rowling' and avail = 'True';
 update Book set avail = 'True';
 select * from Book;
 select * from DVD;
+
+select * from Book inner join DVD on author = director;

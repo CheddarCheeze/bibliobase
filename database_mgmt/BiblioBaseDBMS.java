@@ -453,17 +453,33 @@ public class BiblioBaseDBMS {
             String col2){
         //---------------------------------UNDER_CONSTRUCTION--------------------------
         ArrayList<ArrayList<Field>> records = new ArrayList<>();
+        ArrayList<Attribute> attributes = new ArrayList<>();
         ArrayList<Attribute> att1 = TABLES.get(tI).getAttributes();
         ArrayList<Attribute> att2 = TABLES.get(tI2).getAttributes();
-        if(TABLES.get(tI).getNumAttributes() != TABLES.get(tI2).getNumAttributes()){
-            throw new IllegalArgumentException("ERROR: number of table attributes don't match");
+        ArrayList<ArrayList<Field>> rec1 = TABLES.get(tI).getRecords();
+        ArrayList<ArrayList<Field>> rec2 = TABLES.get(tI2).getRecords();
+        
+        int col1Idx = TABLES.get(tI).getAttributeIdx(col1);
+        int col2Idx = TABLES.get(tI2).getAttributeIdx(col2);
+        //check if column 1's type does not match that of column 2
+        if(!att1.get(col1Idx).getType().equals(att2.get(col2Idx).getType())){
+            throw new IllegalArgumentException("ERROR: column types must match for INNER JOIN");
         }
-        for(int i = 0; i < TABLES.get(tI).getNumAttributes(); i++){
-            for(int j = i; j < TABLES.get(tI2).getNumAttributes(); j++){
-                if(att1.get(i).isEqual(att2.get(j))){
-                }
+        //create JOIN table attributes
+        attributes.addAll(att1);
+        attributes.addAll(att2);
+        //create product table
+        ArrayList<Field> temp = null;
+        for(int i = 0; i < rec1.size(); i++){
+            for(int j = 0; j < rec2.size(); j++){
+                temp = new ArrayList<>();
+                temp.addAll(rec1.get(i));
+                temp.addAll(rec2.get(j));
+                records.add(temp);
             }
         }
+        Table superT = new Table("", attributes, records);
+        displayTable(superT);
         return null;
     }
     
@@ -1224,7 +1240,7 @@ public class BiblioBaseDBMS {
     }
     
     static boolean isCommand(String str){
-        if(SYS_ADMIN){
+        if(SYS_ADMIN || CATTING){
             return str.toUpperCase().matches("CREATE|UPDATE|SET|WHERE|SELECT|FROM|"
                 + "DELETE|INSERT|INTO|VALUES|DROP|COMMIT|ROLLBACK|TO|ADD|ALTER|RENAME|"
                 + "TRUNCATE|DATABASE");
