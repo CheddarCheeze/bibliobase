@@ -164,16 +164,21 @@ public class BiblioBaseDBMS {
         //get table
         tI = tableSearch(tableName);
         ArrayList<Attribute> atts = TABLES.get(tI).getAttributes();
-        ArrayList<ArrayList<Field>> recs = TABLES.get(tI).getRecords();
+        ArrayList<ArrayList<Field>> recs = new ArrayList<>();
         ArrayList<Field> rec;
+        //add attribute names as values to recs
         for(int i = 0; i < atts.size(); i++){
+            String iS = String.valueOf(i);
             rec = new ArrayList<>();
+            rec.add(new Field(iS));
             rec.add(new Field(atts.get(i).getName()));
             recs.add(rec);
         }
         ArrayList<Attribute> attribs = new ArrayList<>();
         attribs.add(new Attribute("name","string"));
         Table t = new Table("",attribs,recs);
+        t.convertToView();
+        displayTable(t);
     }
     
     static void truncateCheck(ArrayList<String> word){
@@ -1339,13 +1344,13 @@ public class BiblioBaseDBMS {
                     go = false;
                 } 
                 else{
-                    try{
-                        parseString(s);
-                    }
-                    catch (Exception e){
-                        System.out.println(e.getMessage());
-                    }
-                    //parseString(s);
+//                    try{
+//                        parseString(s);
+//                    }
+//                    catch (Exception e){
+//                        System.out.println(e.getMessage());
+//                    }
+                    parseString(s);
                 }
             }
             sc.close();
