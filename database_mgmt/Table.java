@@ -9,10 +9,19 @@ public class Table{
     private int maxPrimaryKey;
      
     public Table(String name, ArrayList<Attribute> cols, 
+            ArrayList<ArrayList<Field>> rows, int mP){
+        this.name = name;
+        this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
+        this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
+        this.maxPrimaryKey = mP;
+    }
+    
+    public Table(String name, ArrayList<Attribute> cols, 
             ArrayList<ArrayList<Field>> rows){
         this.name = name;
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>(rows);  //not deep----------------
+        this.maxPrimaryKey = -1;
         setPrimaryKey();
     }
     
@@ -20,6 +29,7 @@ public class Table{
         this.name = name;
         this.attributes = new ArrayList<Attribute>(cols);    //not deep------------------------
         this.records = new ArrayList<ArrayList<Field>>();
+        this.maxPrimaryKey = -1;
         setPrimaryKey();
     }
     
@@ -27,6 +37,7 @@ public class Table{
         this.name = other.getName();
         this.attributes = new ArrayList<Attribute>(other.getAttributes());    //not deep------------------------
         this.records = other.getRecords();
+        this.maxPrimaryKey = -1;
         setPrimaryKey();
     }
     
@@ -103,18 +114,34 @@ public class Table{
     }
     
     private void setPrimaryKey(){
+        String val = null;
+        int valued = -1;
+        //if records size is greater than zero set valued to highest id
+        if(this.records.size() != 0){
+            val = this.records.get(this.records.size()-1).get(0).getValue();
+            valued = Integer.parseInt(val);
+        }
+        //if id attribute doesn't exist, add it to table and rows
         if( !(this.attributes.size() > 0 && 
                 this.attributes.get(0).getName().equals("ID"))){
             this.attributes.add(0, new Attribute("ID", "FLOAT"));
         }
-        if(this.records.size() == 0){
-            this.maxPrimaryKey = -1;
+        //initially empty table, added first values
+        if(this.maxPrimaryKey == -1 && this.records.size() != 0){
+            this.maxPrimaryKey = valued;
         }
-        else{
-            Field finalPrimary = this.records.get(this.records.size()-1).get(0);
-            int value = Integer.parseInt(finalPrimary.getValue());
-            this.maxPrimaryKey = value;
+        else if(valued > this.maxPrimaryKey){
+            this.maxPrimaryKey = valued;
         }
+        
+//        if(this.records.size() == 0){
+//            this.maxPrimaryKey = -1;
+//        }
+//        else{
+//            Field finalPrimary = this.records.get(this.records.size()-1).get(0);
+//            int value = Integer.parseInt(finalPrimary.getValue());
+//            this.maxPrimaryKey = value;
+//        }
     }
     
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
