@@ -1,2 +1,2 @@
-cat ID FLOAT table STRING ( "0" "sysdatabases" )
-sysdatabases ID FLOAT name STRING ( "1" "Test" )
+cat 0 ID FLOAT table STRING ( "0" "sysdatabases" )
+sysdatabases 1 ID FLOAT name STRING ( "1" "Test" )
