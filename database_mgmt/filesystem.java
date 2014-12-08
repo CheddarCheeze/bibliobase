@@ -80,7 +80,7 @@ public class filesystem
 	static Table strToTable(String[] temp)
 	{
 		String tablename = temp[0];
-		String primarykey = temp[1];
+		int primarykey = Integer.parseInt(temp[1]);
 		int i = 2;
 		ArrayList<Attribute> attributes = new ArrayList<>();
 		ArrayList<Field> record = new ArrayList<>();
