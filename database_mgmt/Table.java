@@ -221,6 +221,10 @@ public class Table{
         return this.name;
     }
     
+    public int getMaxPrimary(){
+        return this.maxPrimaryKey;
+    }
+    
     public void convertToView(){
         String value;
         for(int i = this.records.size()-1; i >= 0; i--){
