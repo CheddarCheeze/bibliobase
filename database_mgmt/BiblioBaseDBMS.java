@@ -133,12 +133,36 @@ public class BiblioBaseDBMS {
                     }else{
                         throw new IllegalArgumentException("ERROR: TRUNCATE should have 3 words");
                     }   break;
+                case "GET":
+                    if(word.size() == 4){
+                        getCheck(word);
+                    }else{
+                        throw new IllegalArgumentException("ERROR: GET command should be 4 words long");
+                    }   break;
                 case "EXIT":
                     break;
                 default:
                     throw new IllegalArgumentException("\"" + word.get(0) + "\"" + " is not a valid command");
             }
         }
+    }
+    
+    static void getCheck(ArrayList<String> word){
+        int tI = -1;
+        String tableName;
+        
+        if(!word.get(1).toUpperCase().equals("ATTRIBUTES")){
+            throw new IllegalArgumentException("ERROR: second word in GET command must be ATTRIBUTES");
+        }
+        if(!word.get(2).toUpperCase().equals("FROM")){
+            throw new IllegalArgumentException("ERROR: third word in GET command must be FROM");
+        }
+        tableName = word.get(3);
+        if(!isValue(tableName)){
+            throw new IllegalArgumentException("ERROR: table name in GET command should not be a system word");
+        }
+        //get table
+        tI = tableSearch(tableName);
     }
     
     static void truncateCheck(ArrayList<String> word){
@@ -747,7 +771,6 @@ public class BiblioBaseDBMS {
         ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
 
         //perform OR operations
-        records = TABLES.get(tI).getRecords();
         List<String> temp;
         for(int i = 0; i < tok.size(); i+=3){ //i+=3 will parse operations in tok
             temp = tok.subList(i, i+3);
@@ -815,7 +838,7 @@ public class BiblioBaseDBMS {
                             + " word, not a valid value");
                 } 
                 //store OR operations
-                if(word.get(i).equals("OR")){
+                if(word.get(i).toUpperCase().equals("OR")){
                     if(colName != null && operator != null && value != null){
                         tok.add(colName); //add column name
                         tok.add(operator); //add operator
