@@ -38,7 +38,7 @@ session_start();
           for($i=0;$i<count($useraccounts);$i++){
             if($useraccounts[$i]->username == $username && $useraccounts[$i]->password == $password){
               $_SESSION['email'] = $useraccounts[$i]->email;
-              $_SESSION['security'] = $useraccounts[$i]->seclevel;
+              $_SESSION['security'] = $useraccounts[$i]->security; //CR 12/7
               return true;    
             }
           }
@@ -74,6 +74,7 @@ session_start();
           $myob->username = $_POST['newuser'];
           $myob->password = $_POST['newpass'];
           $myob->email = $_POST['email'];
+		  $myob->security = $_POST['security']; //CR 12/7
           if(file_exists("accounts.json"))
             $accounts = json_decode(file_get_contents("accounts.json"));
           if(isset($accounts)){
@@ -161,6 +162,8 @@ session_start();
             </div><div class="form-group">
               <input type="text" class="form-control input-lg" placeholder="Email" name="email">
             </div>
+			<!-- CR 12/7 added automatic/hidden security level as patron -->
+			<input type = "hidden" name= "security" value = "patron"></br>
             <div class="form-group">
               <button class="btn btn-primary btn-lg btn-block" type="submit" value="Register" name="register" onmouseover="Bfocus(this,1)" onmouseout="Bfocus(this,2)">Create Account</button>
               <span class="pull-right"><a data-dismiss="modal" href="#">Login</a></span>
