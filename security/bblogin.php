@@ -162,8 +162,12 @@ session_start();
             </div><div class="form-group">
               <input type="text" class="form-control input-lg" placeholder="Email" name="email">
             </div>
-			<!-- CR 12/7 added automatic/hidden security level as patron -->
-			<input type = "hidden" name= "security" value = "patron"></br>
+			<!-- CR 12/7 added automatic/hidden security level as patron 
+			3 Administrator
+			2 Worker
+			1 User
+			0 Guest-->
+			<input type = "hidden" name= "security" value = "1"></br>
             <div class="form-group">
               <button class="btn btn-primary btn-lg btn-block" type="submit" value="Register" name="register" onmouseover="Bfocus(this,1)" onmouseout="Bfocus(this,2)">Create Account</button>
               <span class="pull-right"><a data-dismiss="modal" href="#">Login</a></span>
