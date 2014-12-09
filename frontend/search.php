@@ -244,7 +244,7 @@ if($_POST["checkOut"]){
 			//displays to remind the person to select a type
 			?><p>*You must select a type.</p><?php
 			//echo $_SESSION['security']; //used these as debug tools
-			//echo $_SESSION['email'];
+			//echo $output;
 			//echo "\"select * from $searchtype where $searchkind = '$searchterm';\"";
 		}
 		?>	

@@ -29,7 +29,7 @@ if($_POST["addConfirm"]){
 	$num = $_POST["number"];
 	$avail = "True";
 	
-	$output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into $type values (\"$title\", \"$author\", \"$genre\", \"$isbn\", \"$avail\");\"");
+	$output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into $type values('$title', '$author', '$genre', '$isbn', '$avail');\"");
 }
 	
 ?>
