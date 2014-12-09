@@ -187,7 +187,6 @@ public class BiblioBaseDBMS {
         ArrayList<Attribute> attribs = new ArrayList<>();
         attribs.add(new Attribute("name","string"));
         Table t = new Table("",attribs,recs);
-        t.convertToView();
         displayTable(t);
     }
     
