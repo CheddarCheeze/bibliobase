@@ -178,15 +178,14 @@ public class BiblioBaseDBMS {
         ArrayList<Field> rec;
         //add attribute names as values to recs
         for(int i = 0; i < atts.size(); i++){
-            String iS = String.valueOf(i);
             rec = new ArrayList<>();
-            rec.add(new Field(iS));
             rec.add(new Field(atts.get(i).getName()));
             recs.add(rec);
         }
         ArrayList<Attribute> attribs = new ArrayList<>();
         attribs.add(new Attribute("name","string"));
         Table t = new Table("",attribs,recs);
+        t.convertToView();
         displayTable(t);
     }
     
