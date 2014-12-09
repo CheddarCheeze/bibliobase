@@ -3,9 +3,6 @@ package database_mgmt;
 import java.io.*;
 import java.util.Scanner;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,29 +12,41 @@ public class filesystem
 	static boolean searchDb(String dbname)
 	{
 		File folder = new File("databases");
-		if(!folder.exists())
+		if(!folder.exists()){
 			return false;
-		
+		}
 		File dbfile = new File("databases/"+dbname+".txt");
 		return dbfile.exists();
 	}
 		
 	//Returns true if database.txt is created
+	//NOTE: table_security, user_table, and checkout are not added to the cat
 	static boolean createDb(String dbname)
 	{
 		File folder = new File("databases");
 		if(!folder.exists())
 		{
-			if(!folder.mkdir())
+			if(!folder.mkdir()){
 				throw new IllegalArgumentException("Could not create databases directory");
+			}
 		}
 		
 		File dbfile = new File("databases/"+dbname+".txt");
-		if(dbfile.exists())
+		if(dbfile.exists()){
 			return false;
+		}
 		try{
 			dbfile.createNewFile();
-			return true;
+			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt", true)){
+				f1.write("table_security 2 ID FLOAT table_name STRING security_lvl FLOAT ( \"0\" \"table_security\" \"3\" | \"1\" \"user_table\" \"2\" | \"2\" \"check_out\" \"2\" )\n"
+						+ "user_table 0 ID STRING account_name STRING ( \"0\" \"admin\" )\n"
+						+ "checkout -1 patron_id STRING inv_type STRING inv_id FLOAT due_date DATE ( )\n");
+				f1.flush();
+				f1.close();
+				return true;
+			} catch (IOException x) {
+				return false;
+			}
 		}catch(IOException x){
 			return false;
 		}
@@ -125,8 +134,9 @@ public class filesystem
 			i++;
 			attIdx++;
 		}
-		if(!record.isEmpty())
+		if(!record.isEmpty()){
 			recordlist.add(record);
+		}
 		/*//print out arraylists for checking
 			for(String value : attributeNames)
 					System.out.print(value + " ");
@@ -252,8 +262,9 @@ public class filesystem
 					othertbls.add(newtblstr);
 					foundtbl = true;
 				}
-				else
+				else{
 					othertbls.add(s);
+				}
 			}
 		}
 		inputF.close();
@@ -346,10 +357,12 @@ public class filesystem
 			if(tsearch.hasNext())
 			{
 				String tablename = tsearch.next();	
-				if(tablename.equals(tblname))
+				if(tablename.equals(tblname)){
 					foundtbl = true;
-				else
+				}
+				else{
 					othertbls.add(s);
+				}
 			}
 		}
 		inputF.close();
@@ -357,8 +370,9 @@ public class filesystem
 		{
 			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt"))
 			{
-				for(String var : othertbls)
+				for(String var : othertbls){
 					f1.write(var + "\n");
+				}
 				f1.flush();
 				f1.close();
 				return true;
@@ -398,8 +412,9 @@ public class filesystem
 					othertbls.add(newname+s.substring(oldname.length(),s.length()));
 					foundtbl = true;
 				}
-				else
+				else{
 					othertbls.add(s);
+				}
 			}
 		}
 		inputF.close();
@@ -407,8 +422,9 @@ public class filesystem
 		{
 			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt"))
 			{
-				for(String var : othertbls)
+				for(String var : othertbls){
 					f1.write(var + "\n");
+				}
 				return true;
 			} catch (IOException x) {
 				return false;
