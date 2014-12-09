@@ -16,20 +16,37 @@ if($_POST['logout']){
 //setting path name to variable
 //$path = dirname(dirname(__FILE__));
 $path = dirname(__FILE__);
+$change = array();
+
+$thissecurity = $_SESSION['security'];
+
+$level = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"select * from table_security where security_lvl <= $thissecurity;\"");
+
+$addtype = json_decode($level, TRUE);
 
 //run javac on BibliobaseDBMS.java 
 //exec("javac database_mgmt/BiblioBaseDBMS.java");
+if($_POST["next"]){
+	$type = $_POST["type"];
+	
+	$info = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"get attributes from $type;\"");
+	$change = json_decode($info, TRUE);
+}
 
 if($_POST["addConfirm"]){
-	$title = $_POST["title"];
-	$author = $_POST["author"];
-	$genre = $_POST["genre"];
-	$isbn = $_POST["idenification"];
-	$type = $_POST["type"];
-	$num = $_POST["number"];
-	$avail = "True";
+	$type = $_POST['newtype'];
+	$attr = $_POST['newattr'];
+	$num = $_POST['numcopy'];
 	
-	$output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into $type values('$title', '$author', '$genre', '$isbn', '$avail');\"");
+	foreach($_POST['textinput'] as $b){
+		$parenth = $parenth . "'$b',";
+	}
+	
+	$newparenth = substr($parenth, 0, -1);
+	
+	for($i = 0; $i < $num; $i++){
+		$output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into $type values($newparenth);\"");
+	}
 }
 	
 ?>
@@ -169,31 +186,38 @@ if($_POST["addConfirm"]){
 		<h2>Add Materials</h2>
 	</div>
 	<div class="container">
+		<form role="form" action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
+		<label>Type:</label>
+		<br><select name="type" id="type">
+			<option selected="selected"></option>
+			<?php for($i = 0; $i < count($addtype); $i++){
+				$newtype = $addtype[$i]["table_name"];
+			?>
+			<option value=<?php echo $newtype;?>><?php echo $newtype;?></option>
+			<?php }?>
+		</select><br>
+		<input type="submit" value="Next" name="next" class="btn btn-default"><br>
+	</form>
+	<?php if(isset($type)){?>
 		<p id="addForm">Please fill out all fields.
 		<form role="form" action=<?php echo $_SERVER['SCRIPT_NAME']?> method="post">
 			<div class="form-group">
-			<label>Type:</label>
-			<br><select name="type" id="type">
-				<option selected="selected"></option>
-				<option value="Book">Book</option>
-				<option value="DVD">DVD</option>
-				<option value="MCD">Music CD (MCD)</option>
-				<option value="BCD">Book CD (BCD)</option>
-			</select><br>
-			<label>Title:</label>
-			<input type="text" name="title" id="title" class="form-control">
-			<label name="labelAuthor">Author/Director:</label>
-			<input type="text" name="author" id="author" class="form-control">
-			<label>Genre:</label>
-			<input type="text" name="genre" id="genre" class="form-control">
-			<label>ISBN:</label>
-			<input type="text" name="idenification" id="idenification" class="form-control">
+				<input type="hidden" name="newtype" value=<?php echo $type;?>>
+				<?php for($i = 0; $i < (count($change) - 1); $i++){
+					$tothis = $change[$i + 1]["name"];
+				?>
+			<label><?php echo $tothis;?>:</label>
+			<input type="text" name="textinput[]" id="title" class="form-control">
+			<?php }?>
 			<label>Number of Copies:</label>
-			<input type="text" name="number" id="number" class="form-control">
+			<input type="text" name="numcopy" class="form-control">
 		</div>
-			<input type="submit" value="Add" name="addConfirm" id="addConfirm" class="btn btn-default" onclick="turnOff()">
+			<input type="submit" value="Add" name="addConfirm" id="addConfirm" class="btn btn-default">
 		</form>
-		<?php echo "$output";?>
+		<?php //print($parenth);
+	}
+		?>
+		<?php //echo "$change $output";?>
 	</p>
 	</div>
   </body>

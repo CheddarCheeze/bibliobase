@@ -183,7 +183,7 @@ if($_POST["subCol"]){
 		<div class="container">
 			<h2>Create a new Table:</h2><br>
 			<form action=<?php echo $_SERVER['SCRIPT_NAME']?> role="form" method="post">
-			<label>Type:</label>
+			<label>Type: Must be one word</label>
 			<input type="text" class="form-control" name="newType">
 			<label>Number of Columns:</label>
 			<input type="text" class="form-control" name="amtCol">
