@@ -38,7 +38,7 @@ session_start();
           for($i=0;$i<count($useraccounts);$i++){
             if($useraccounts[$i]->username == $username && $useraccounts[$i]->password == $password){
               $_SESSION['email'] = $useraccounts[$i]->email;
-              $_SESSION['security'] = $useraccounts[$i]->security; //CR 12/7
+              $_SESSION['security'] = $useraccounts[$i]->seclevel;
               return true;    
             }
           }
@@ -55,7 +55,7 @@ session_start();
           if($check==true){
             $_SESSION['username'] = $username;
             ?>
-            <meta http-equiv="refresh" content="1; url="../first.php"><?php;
+            <meta http-equiv="refresh" content="1; url=../first.php"><?php;
             exit;
           }
           else{
@@ -74,7 +74,6 @@ session_start();
           $myob->username = $_POST['newuser'];
           $myob->password = $_POST['newpass'];
           $myob->email = $_POST['email'];
-		  $myob->security = $_POST['security']; //CR 12/7
           if(file_exists("accounts.json"))
             $accounts = json_decode(file_get_contents("accounts.json"));
           if(isset($accounts)){
@@ -97,9 +96,6 @@ session_start();
             fwrite($fh, json_encode($accounts));
             fclose($fh);
           }
-		  $sendname = $_POST['newuser'];
-		  $path = dirname(dirname(__FILE__));
-		  $output = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into user_table values('$sendname']');\"");
       }
     ?>
     </div>
@@ -129,7 +125,7 @@ session_start();
             <div class="form-group">
               <button class="btn btn-primary btn-lg btn-block" type="submit" value="Login" name="login" onmouseover="Bfocus(this,1)" onmouseout="Bfocus(this,2)">Sign In</button>
               <span class="pull-right"><a data-toggle="modal" href="#signupModal">Register</a></span>
-              <!-- <span><a href="#">Need help?</a></span> -->
+              <span><a href="../index.html">Go back</a></span>
             </div>
           </form>
       </div>
@@ -165,12 +161,6 @@ session_start();
             </div><div class="form-group">
               <input type="text" class="form-control input-lg" placeholder="Email" name="email">
             </div>
-			<!-- CR 12/7 added automatic/hidden security level as patron 
-			3 Administrator
-			2 Worker
-			1 User
-			0 Guest-->
-			<input type = "hidden" name= "security" value = "1"></br>
             <div class="form-group">
               <button class="btn btn-primary btn-lg btn-block" type="submit" value="Register" name="register" onmouseover="Bfocus(this,1)" onmouseout="Bfocus(this,2)">Create Account</button>
               <span class="pull-right"><a data-dismiss="modal" href="#">Login</a></span>
