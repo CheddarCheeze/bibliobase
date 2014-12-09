@@ -627,9 +627,11 @@ public class BiblioBaseDBMS {
                 }
                 recordsCrop.add(record);
             }
-            //create table 
+            //create table; if user selects ID do not convertToView, which will remove ID field from rows and columns
             t = new Table(null, columns, recordsCrop);
-            t.convertToView();
+            if(!columns.get(0).getName().equals("ID")){
+                t.convertToView();
+            }
             displayTable(t);
             return;
         }
@@ -654,7 +656,9 @@ public class BiblioBaseDBMS {
             }
             //create table 
             t = new Table(null, columns, recordsCrop);
-            t.convertToView();
+            if(!columns.get(0).getName().equals("ID")){
+                t.convertToView();
+            }
         }else{
             //get records
             I = where(word, T, wP);
