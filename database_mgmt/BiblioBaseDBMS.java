@@ -454,7 +454,6 @@ public class BiblioBaseDBMS {
     
     static Table innerJoin(int tI, int tI2, String col1, String operator,
             String col2){
-        //---------------------------------UNDER_CONSTRUCTION--------------------------
         ArrayList<ArrayList<Field>> records = new ArrayList<>();
         ArrayList<Attribute> attributes = new ArrayList<>();
         ArrayList<Attribute> att1 = TABLES.get(tI).getDetailedAttributes();
@@ -497,7 +496,9 @@ public class BiblioBaseDBMS {
                 }   
             }
         }
-        return new Table("", attributes, records);
+        Table t = new Table("", attributes, records);
+        t.convertToView();
+        return t;
     }
     
     static void selectCheck(ArrayList<String> word){
@@ -595,7 +596,7 @@ public class BiblioBaseDBMS {
             T = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
             wP++;
         }
-        //check if there are no extra words
+        //check if there are no extra words and we're selecting all columns
         if(wP == word.size() && selectAll){
             displayTable(T);   //execute basic select display
             return;

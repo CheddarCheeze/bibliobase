@@ -209,7 +209,7 @@ public class Table{
         }
         throw new IllegalArgumentException("ERROR: attribute not found in table");
     }
-    
+    //returns attribute in table with selected name
     public Attribute getAttribute(String col){
         for(int i = 0; i < getNumAttributes(); i++){
             if(col.equals(this.attributes.get(i).getName())){

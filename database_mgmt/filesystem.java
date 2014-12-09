@@ -39,8 +39,8 @@ public class filesystem
 			dbfile.createNewFile();
 			try (FileWriter f1 = new FileWriter("databases/" + dbname + ".txt", true)){
 				f1.write("table_security 2 ID FLOAT table_name STRING security_lvl FLOAT ( \"0\" \"table_security\" \"3\" | \"1\" \"user_table\" \"2\" | \"2\" \"check_out\" \"2\" )\n"
-						+ "user_table 0 ID STRING account_name STRING ( \"0\" \"admin\" )\n"
-						+ "checkout -1 patron_id STRING inv_type STRING inv_id FLOAT due_date DATE ( )\n");
+						+ "user_table 0 ID FLOAT account_name STRING ( \"0\" \"admin\" )\n"
+						+ "checkout -1 ID FLOAT patron_id FLOAT inv_type STRING inv_id FLOAT due_date DATE ( )\n");
 				f1.flush();
 				f1.close();
 				return true;
