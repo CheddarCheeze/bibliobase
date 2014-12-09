@@ -3,7 +3,7 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = "guest";
+	$_SESSION['security'] = 0;
 }
 
 //setting path name to variable
@@ -115,7 +115,7 @@ if($_POST["checkOut"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != "guest"){	
+				if($_SESSION['security'] != 0){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -125,11 +125,11 @@ if($_POST["checkOut"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+					if($_SESSION['security'] > 3){?>
                     <li><a href="add.php">Add Material</a></li>
 					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == "Administrator"){
+					if($_SESSION['security'] == 4){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>
@@ -238,8 +238,9 @@ if($_POST["checkOut"]){
 				}
 			?>
 		</table>
+		<?php if($_SESSION['security'] > 1){?>
 		<button type="button" name="checkOut" class="btn btn-default">Check Out</button>
-		<?php }}
+		<?php }}}
 		else{
 			//displays to remind the person to select a type
 			?><p>*You must select a type.</p><?php

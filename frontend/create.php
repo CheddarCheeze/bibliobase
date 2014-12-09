@@ -3,52 +3,54 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = "guest";
+	$_SESSION['security'] = 0;
 }
 
 //setting path name to variable
 //$path = dirname(dirname(__FILE__));
 $path = dirname(__FILE__);
 
-//run javac on BibliobaseDBMS.java once
+//run javac on BibliobaseDBMS.java 
 //exec("javac database_mgmt/BiblioBaseDBMS.java");
-	
-//sets variable to search text field if set and if not to *
-if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
-	$searchterm = "*";
-}
-else
-{
-	$searchterm = $_POST["atextsearch"];
+
+if($_POST["subType"]){
+	$type = $_POST["newType"];
+	$numcol = $_POST["amtCol"];
+	$secLevel = $_POST["seclev"];
 }
 
-//set variables to search type {book, dvd, music cd, book cd}
-$searchtype = $_POST["searchType"];
-
-//set variable for search by field
-if(!isset($_POST["searchKind"]) || $_POST["searchKind"] == null){
-	$searchkind = "title";
-}
-else{
-	$searchkind = $_POST["searchKind"];
-}
-
-
-//when search button is clicked run program to connect to database
-if($_POST["asearch"]){
-	if($searchterm == "*"){
-		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype;\"");
-		$data = json_decode($output, TRUE);
+if($_POST["subCol"]){
+	$type = $_POST["newType2"];
+	$numcol = $_POST["amtCol2"];
+	$secLevel = $_POST["seclev2"];
+	$cols = array();
+	$dataType = array();
+	foreach($_POST['col'] as $v){
+		if($v == null){
+			$error = "Error: Missing Column Name. Please start over.";
+			break;
+		}
+		array_push($cols, $v);
 	}
-	else{
-		$output = shell_exec("cd $path" . "&& java database_mgmt/BiblioBaseDBMS test \"select * from $searchtype where $searchkind = '$searchterm';\"");
-		$data = json_decode($output, TRUE);
+	foreach($_POST['datatype'] as $b){
+		if($b == null){
+			$error = "Error";
+			break;
+		}
+		array_push($dataType, $b);
 	}
 	
-}
-
-if($_POST["checkOut"]){
-	//do something here to check the book out :) not implemented yet
+	for($i = 0; $i < count($cols); $i++){
+		$sendData = $sendData . "'$cols[$i]' $dataType[$i],";
+	}
+	
+	$remove = substr($sendData, 0, -1);
+	
+	$output1 = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"create table $type ($remove);\"");
+	$output2 = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS test \"insert into table_security values('$type','$secLevel');\"");
+	
+	$test ="cd $path && java database_mgmt/BiblioBaseDBMS test \"create table $type ($remove);\"";
+	
 }
 	
 ?>
@@ -115,7 +117,7 @@ if($_POST["checkOut"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != "guest"){	
+				if($_SESSION['security'] != 0){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -125,11 +127,11 @@ if($_POST["checkOut"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+					if($_SESSION['security'] > 3){?>
                     <li><a href="add.php">Add Material</a></li>
 					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == "Administrator"){
+					if($_SESSION['security'] == 4){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>
@@ -168,15 +170,62 @@ if($_POST["checkOut"]){
             </div>
           </div>
         </div>
-
       </div>
     </div>
 	<div id="backg">
 		<br><br><br><br><br><br>
 	</div>
-	<div class="container" id="testing">
+	<div class="container" id="formCreate">
+		<div class="container">
+			<h2>Create a new Table:</h2><br>
+			<form action=<?php echo $_SERVER['SCRIPT_NAME']?> role="form" method="post">
+			<label>Type:</label>
+			<input type="text" class="form-control" name="newType">
+			<label>Number of Columns:</label>
+			<input type="text" class="form-control" name="amtCol">
+			<label>Security Level:</label>
+				<br><select name="seclev">
+						<option selected="selected"></option>
+						<option value="0">Everyone</option>
+						<option value="1">Patrons, Librarians, Admin</option>
+						<option value="2">Librarians, Admin</option>
+						<option value="3">Admin Only</option>
+				</select><br>
+			<input type="submit" name="subType" value="Next" class="btn btn-default">
+			</form><br><br>
+			<form action=<?php echo $_SERVER['SCRIPT_NAME']?> role="form" method="post">
+				<input type="hidden" name="newType2" value=<?php echo $type;?>>
+				<input type="hidden" name="amtCol2" value=<?php echo $numcol;?>>
+				<input type="hidden" name="seclev2" value=<?php echo $secLevel;?>>
+			<?php
+			//echo $test;
+			if(isset($type)){
+			for($i = 0; $i < $numcol; $i++){
+				?>
+				<label>Column <?php echo ($i + 1);?></label>
+				<input type="text" class="form-control" name="col[]">
+				<label>Choose Data Type for Column <?php echo ($i + 1);?></label>
+				<br><select name="datatype[]">
+						<option selected="selected"></option>
+						<option value="string">String</option>
+						<option value="float">Number</option>
+						<option value="date">Date</option>
+				</select><br>
+				<?php
+			}
+			//print_r($col);
+			?>
+			<input type="submit" class="btn btn-default" name="subCol" value="Create Table">
+			</form>
+			<?php }
+			echo $error;
+			//echo $remove;
+			//echo $type;
+			echo "$output1 $output2";
+			?>
+		</div>
 	</div>		
-	<div class="container" id="myResults">
+	<div class="container">
 	</div>
   </body>
 </html>

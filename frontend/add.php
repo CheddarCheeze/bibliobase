@@ -3,7 +3,7 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = "guest";
+	$_SESSION['security'] = 0;
 }
 
 //if logout button is clicked, supposed to unset login info
@@ -103,7 +103,7 @@ if($_POST["addConfirm"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != "guest"){	
+				if($_SESSION['security'] != 0){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -113,11 +113,11 @@ if($_POST["addConfirm"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+					if($_SESSION['security'] > 3){?>
                     <li><a href="add.php">Add Material</a></li>
 					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == "Administrator"){
+					if($_SESSION['security'] == 4){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>
