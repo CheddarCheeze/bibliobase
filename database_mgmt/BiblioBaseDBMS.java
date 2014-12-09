@@ -441,7 +441,7 @@ public class BiblioBaseDBMS {
                     + "the correct location");
         }else{
             wP++;
-            I = where(word, tI, wP);
+            I = where(word, TABLES.get(tI), wP);
             for(int i = 0; i < I.size(); i++){
                 int row = I.get(i);
                 for(int j = 0; j < colIdx.size(); j++){
@@ -457,14 +457,26 @@ public class BiblioBaseDBMS {
         //---------------------------------UNDER_CONSTRUCTION--------------------------
         ArrayList<ArrayList<Field>> records = new ArrayList<>();
         ArrayList<Attribute> attributes = new ArrayList<>();
-        ArrayList<Attribute> att1 = TABLES.get(tI).getAttributes();
-        ArrayList<Attribute> att2 = TABLES.get(tI2).getAttributes();
+        ArrayList<Attribute> att1 = TABLES.get(tI).getDetailedAttributes();
+        ArrayList<Attribute> att2 = TABLES.get(tI2).getDetailedAttributes();
         ArrayList<ArrayList<Field>> rec1 = TABLES.get(tI).getRecords();
         ArrayList<ArrayList<Field>> rec2 = TABLES.get(tI2).getRecords();
-        
-        int col1Idx = TABLES.get(tI).getAttributeIdx(col1);
-        int col2Idx = TABLES.get(tI2).getAttributeIdx(col2);
+        //split up table.attribute
+        String[] col1Arr = col1.split("[.]");
+        String[] col2Arr = col2.split("[.]");
+        //test if the code split into two tokens
+        if(col1Arr.length != 2 || col2Arr.length != 2){
+            throw new IllegalArgumentException("ERROR: columns specicified for INNER JOIN ON do not specify table: table.attribute");
+        }
+        //test if table names are correct
+        if(!col1Arr[0].equals(TABLES.get(tI).getName())){
+            throw new IllegalArgumentException("ERROR: first table specified in inner join does not match first attribute's table");
+        }else if(!col2Arr[0].equals(TABLES.get(tI2).getName())){
+            throw new IllegalArgumentException("ERROR: second table specified in inner join does not match second attribute's table");
+        }
         //check if column 1's type does not match that of column 2
+        int col1Idx = TABLES.get(tI).getAttributeIdx(col1Arr[1]);
+        int col2Idx = TABLES.get(tI2).getAttributeIdx(col2Arr[1]);
         if(!att1.get(col1Idx).getType().equals(att2.get(col2Idx).getType())){
             throw new IllegalArgumentException("ERROR: column types must match for INNER JOIN");
         }
@@ -476,18 +488,19 @@ public class BiblioBaseDBMS {
         for(int i = 0; i < rec1.size(); i++){
             for(int j = 0; j < rec2.size(); j++){
                 temp = new ArrayList<>();
-                temp.addAll(rec1.get(i));
-                temp.addAll(rec2.get(j));
-                records.add(temp);
+                String value = null;
+                //if the field in the first table is equal to the field in the second add record
+                if(rec1.get(i).get(col1Idx).isEqual(rec2.get(j).get(col2Idx))){
+                    temp.addAll(rec1.get(i));
+                    temp.addAll(rec2.get(j));
+                    records.add(temp);
+                }   
             }
         }
-        Table superT = new Table("", attributes, records);
-        displayTable(superT);
-        return null;
+        return new Table("", attributes, records);
     }
     
     static void selectCheck(ArrayList<String> word){
-        Table superTable = null;
         String tableName = new String();
         String attName = new String();
         String attType = new String();
@@ -499,6 +512,7 @@ public class BiblioBaseDBMS {
         ArrayList<Integer> colIdx = null;
         ArrayList<Integer> I = null;
         boolean selectAll = false;
+        Table T = null;
         
         //check if selecting all columns
         wP++;
@@ -538,15 +552,11 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("ERROR: table name cannot be system word"); 
         }else{  //search for table with name from Tables
             tI = tableSearch(word.get(wP));
-        }
-        //check if there are no extra words
-        wP++;
-        if(wP == word.size() && selectAll){
-            displayTable(TABLES.get(tI));   //execute basic select display
-            return;
+            T = TABLES.get(tI);
         }
         //check for INNER JOIN condition--------------------------------------------UNDER_CONSTRUCTION-----------
-        if(word.get(wP).toUpperCase().equals("INNER")){
+        wP++;
+        if(word.size() > wP && word.get(wP).toUpperCase().equals("INNER")){
             String table2;
             String col1 = null;
             String operator = null;
@@ -582,23 +592,29 @@ public class BiblioBaseDBMS {
             if(!isValue(col2)){
                 throw new IllegalArgumentException("ERROR: INNER JOIN second column must not be a system word");
             }
-            superTable = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
+            T = innerJoin(tI, tI2, col1, operator, col2);      //will create table in memory
+            wP++;
+        }
+        //check if there are no extra words
+        if(wP == word.size() && selectAll){
+            displayTable(T);   //execute basic select display
+            return;
         }
         //get attributes and attribute indexes
         if(selectAll){
-            columns = TABLES.get(tI).getAttributes();
+            columns = T.getAttributes();
         }else{
             columns = new ArrayList<Attribute>();
             colIdx = new ArrayList<Integer>();
             for(String col : colNames){
-                columns.add(TABLES.get(tI).getAttribute(col));
-                colIdx.add(TABLES.get(tI).getAttributeIdx(col));
+                columns.add(T.getAttribute(col));
+                colIdx.add(T.getAttributeIdx(col));
             }
         }      
         //display for no WHERE and specified columns selected
         ArrayList<ArrayList<Field>> recordsCrop = new ArrayList<>();
         Table t = null;
-        records = TABLES.get(tI).getRecords();
+        records = T.getRecords();
         if(wP == word.size()){
             String a;
             ArrayList<Field> record = null;
@@ -623,7 +639,7 @@ public class BiblioBaseDBMS {
         //create tables
         wP++;
         if(!selectAll){  //if user did not select all columns
-            I = where(word, tI, wP);
+            I = where(word, T, wP);
             String a;
             ArrayList<Field> record = null;
             //get records
@@ -640,7 +656,7 @@ public class BiblioBaseDBMS {
             t.convertToView();
         }else{
             //get records
-            I = where(word, tI, wP);
+            I = where(word, T, wP);
             for(int i = 0; i < I.size(); i++){
                 int idx = I.get(i);
                 recordsCrop.add(records.get(idx));
@@ -695,7 +711,7 @@ public class BiblioBaseDBMS {
             throw new IllegalArgumentException("ERROR: invalid command \""+
                     word.get(3)+"\"");
         }else{
-            I = where(word, tI, 4);
+            I = where(word, TABLES.get(tI), 4);
             for(int k = I.size()-1; k > -1; k--){
                 TABLES.get(tI).deleteRecord(I.get(k));
             }
@@ -703,7 +719,7 @@ public class BiblioBaseDBMS {
         
     }
     
-    static Set<Integer> operateOnRecords(int tI, List<String> tok, 
+    static Set<Integer> operateOnRecords(Table T, List<String> tok, 
             ArrayList<ArrayList<Field>> records){
         //initialize variables
         Set<Integer> I = new HashSet<Integer>();
@@ -712,10 +728,10 @@ public class BiblioBaseDBMS {
         String currentColType = null;
         
         //perform operations
-        attIdx = TABLES.get(tI).getAttributeIdx(tok.get(0));
-        currentColType = TABLES.get(tI).getAttributes().get(attIdx).getType();
+        attIdx = T.getAttributeIdx(tok.get(0));
+        currentColType = T.getAttributes().get(attIdx).getType();
         int j = 0;
-        Iterator<ArrayList<Field>> it = TABLES.get(tI).getRecords().iterator();
+        Iterator<ArrayList<Field>> it = T.getRecords().iterator();
         while(it.hasNext()){
             Field val = new Field(tok.get(2), currentColType);
             ArrayList<Field> rec = it.next();
@@ -771,13 +787,13 @@ public class BiblioBaseDBMS {
         return I;
     }
     
-    static void AND(ArrayList<String> word, int w, int tI, 
+    static void AND(ArrayList<String> word, int w, Table T, 
             Set<Integer> s, boolean reParse){
         //initialize variables
         Set<Integer> set1 = new HashSet<Integer>();
         Set<Integer> set2 = new HashSet<Integer>();
         ArrayList<String> tok = new ArrayList<>();   //stores operation tokens 
-        ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
+        ArrayList<ArrayList<Field>> records = T.getRecords();
         int attIdx = 0;
 
         //store two operations and a logic operator
@@ -787,9 +803,9 @@ public class BiblioBaseDBMS {
         }
         //perform operations
         List<String> temp = tok.subList(0, 3);
-        set1 = operateOnRecords(tI, temp, records);
+        set1 = operateOnRecords(T, temp, records);
         temp = tok.subList(3, 6);
-        set2 = operateOnRecords(tI, temp, records);
+        set2 = operateOnRecords(T, temp, records);
         if(reParse){            //3-way intersection
             set1.retainAll(set2);
             s.retainAll(set1);
@@ -800,22 +816,22 @@ public class BiblioBaseDBMS {
         }
     }
     
-    static void OR(int tI, Set<Integer> s, ArrayList<String> tok){
+    static void OR(Table T, Set<Integer> s, ArrayList<String> tok){
         //initialize variables
         Set<Integer> set = new HashSet<>(); 
-        ArrayList<ArrayList<Field>> records = TABLES.get(tI).getRecords();
+        ArrayList<ArrayList<Field>> records = T.getRecords();
 
         //perform OR operations
         List<String> temp;
         for(int i = 0; i < tok.size(); i+=3){ //i+=3 will parse operations in tok
             temp = tok.subList(i, i+3);
-            set.addAll(operateOnRecords(tI, temp, records));
+            set.addAll(operateOnRecords(T, temp, records));
         }
         //merge with s
         s.addAll(set);
     }
     
-    static ArrayList<Integer> where(ArrayList<String> word, int tI, 
+    static ArrayList<Integer> where(ArrayList<String> word, Table T, 
             int wP){
         //handles multiple operations and returns concatenated fields
         int place = 1;
@@ -845,7 +861,7 @@ public class BiblioBaseDBMS {
                 value = word.get(i);
                 //if we're at the end of the command and format is correct
                 if(i == word.size()-1 && !isLogicOp(word.get(i)) &&
-                        !TABLES.get(tI).nameInAttributes(word.get(i))){
+                        !T.nameInAttributes(word.get(i))){
                     tok.add(colName); //add column name
                     tok.add(operator); //add operator
                     tok.add(value); //add value
@@ -860,7 +876,7 @@ public class BiblioBaseDBMS {
                     throw new IllegalArgumentException("ERROR: \""+word.get(i)+
                             "\" should be a logical operator");
                 }
-                if(!TABLES.get(tI).nameInAttributes(colName)){
+                if(!T.nameInAttributes(colName)){
                     throw new IllegalArgumentException("ERROR: column name \"" +
                             colName + "\" not in table");
                 }
@@ -890,7 +906,7 @@ public class BiblioBaseDBMS {
                             throw new IllegalArgumentException("ERROR: "+word.get(i+4)+
                                     " is an invalid operator");
                         }
-                        else if(!TABLES.get(tI).nameInAttributes(word.get(i+1))){
+                        else if(!T.nameInAttributes(word.get(i+1))){
                             throw new IllegalArgumentException("ERROR: column name \"" +
                                     word.get(i+1) + "\" not in table");
                         }
@@ -903,7 +919,7 @@ public class BiblioBaseDBMS {
                                     "is a command word, not a valid value");
                         } 
                         
-                        AND(word, i, tI, set, false);
+                        AND(word, i, T, set, false);
                         
                         if(i+4 < word.size() && word.get(i+4).equals("AND")){
                             reParse = true;
@@ -915,7 +931,7 @@ public class BiblioBaseDBMS {
                         }
                     }
                     else{
-                        AND(word, i, tI, set, true);
+                        AND(word, i, T, set, true);
                         reParse = false;
                     }
                 }
@@ -927,8 +943,8 @@ public class BiblioBaseDBMS {
                     + " clause");
         }
         //perform OR operations
-        records = TABLES.get(tI).getRecords();
-        OR(tI, set, tok);
+        records = T.getRecords();
+        OR(T, set, tok);
         
         //return list of sorted row indexes
         I = new ArrayList(set); 

@@ -116,15 +116,23 @@ public class Table{
     private void setPrimaryKey(){
         String val = null;
         int valued = -1;
-        //if records size is greater than zero set valued to highest id
-        if(this.records.size() != 0){
-            val = this.records.get(this.records.size()-1).get(0).getValue();
-            valued = Integer.parseInt(val);
-        }
         //if id attribute doesn't exist, add it to table and rows
         if( !(this.attributes.size() > 0 && 
                 this.attributes.get(0).getName().equals("ID"))){
             this.attributes.add(0, new Attribute("ID", "FLOAT"));
+            int pI = this.maxPrimaryKey;
+            for(ArrayList<Field> rec : this.records){
+                pI++;
+                String v = Integer.toString(pI);
+                rec.add(0, new Field(v));
+            }
+            this.maxPrimaryKey = pI;
+            return;
+        }
+        //if records size is greater than zero set valued to highest id
+        if(this.records.size() != 0){
+            val = this.records.get(this.records.size()-1).get(0).getValue();
+            valued = Integer.parseInt(val);
         }
         //initially empty table, added first values
         if(this.maxPrimaryKey == -1 && this.records.size() != 0){
@@ -133,15 +141,6 @@ public class Table{
         else if(valued > this.maxPrimaryKey){
             this.maxPrimaryKey = valued;
         }
-        
-//        if(this.records.size() == 0){
-//            this.maxPrimaryKey = -1;
-//        }
-//        else{
-//            Field finalPrimary = this.records.get(this.records.size()-1).get(0);
-//            int value = Integer.parseInt(finalPrimary.getValue());
-//            this.maxPrimaryKey = value;
-//        }
     }
     
     public void insertRecord(ArrayList<Field> record){  //inserts one new record
@@ -182,6 +181,16 @@ public class Table{
         for(ArrayList<Field> record : this.records){
             record.remove(idx);
         }
+    }
+    
+    public ArrayList<Attribute> getDetailedAttributes(){        //returns attributes with format table.attribute
+        ArrayList<Attribute> detailedAtts = new ArrayList<>();
+        Attribute detAtt = null;
+        for(Attribute att : this.attributes){
+            detAtt = new Attribute(this.name+"."+att.getName(),att.getType());
+            detailedAtts.add(detAtt);
+        }
+        return detailedAtts;
     }
     
     public int getNumAttributes(){
@@ -263,4 +272,5 @@ public class Table{
         }
         this.attributes.remove(0);
     }
+    
 }
