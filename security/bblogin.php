@@ -97,6 +97,8 @@ session_start();
             fwrite($fh, json_encode($accounts));
             fclose($fh);
           }
+		  $path = dirname(dirname(__FILE__))
+		  exec("cd $path java database_mgmt/BiblioBaseDBMS test \"insert into user_table values('$_POST['newuser']');\"");
       }
     ?>
     </div>
