@@ -85,6 +85,7 @@ public class BiblioBaseDBMS {
                     //if there are an odd # of tokens and size is >= 7
                     if((word.size() & 1) == 1 && word.size() >= 3){
                         createCheck(word);
+                        System.out.println("Successfully created table");
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid CREATE command length");
                     }   break;
@@ -92,6 +93,8 @@ public class BiblioBaseDBMS {
                     //if size of command is >= 7
                     if(word.size() >= 7){
                         insertCheck(word);
+                        if(!CATTING)
+                            System.out.println("Successfully inserted into table");
                         CATTING = false;    //After inserting table into cat it wont need to be on
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid INSERT command length");
@@ -100,6 +103,8 @@ public class BiblioBaseDBMS {
                     //if size of command is < 3 words, the command is invalid
                     if(word.size() >= 3){
                         deleteCheck(word);
+                        if(!CATTING)
+                            System.out.println("Successfully deleted from table");
                         CATTING = false;
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid DELETE command length");
@@ -113,24 +118,28 @@ public class BiblioBaseDBMS {
                 case "UPDATE":
                     if(word.size() >= 6){
                         updateCheck(word);
+                        System.out.println("Successfully updated table contents");
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid UPDATE command length");
                     }   break;
                 case "DROP":
                     if(word.size() == 3){
                         dropCheck(word);
+                        System.out.println("Successfully dropped selection");
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid DROP command length");
                     }   break;
                 case "ALTER":
                     if(word.size() >= 5){
                         alterCheck(word);
+                        System.out.println("Successfully performed alteration");
                     } else {
                         throw new IllegalArgumentException("ERROR: invalid ALTER command length");
                     }   break;
                 case "TRUNCATE":
                     if(word.size() == 3){
                         truncateCheck(word);
+                        System.out.println("Successfully emptied table");
                     }else{
                         throw new IllegalArgumentException("ERROR: TRUNCATE should have 3 words");
                     }   break;
@@ -1185,8 +1194,9 @@ public class BiblioBaseDBMS {
         //determine if table can be created then create or throw exception
         if(!filesystem.createTable(T, DATABASE_NAME)){
             throw new IllegalArgumentException("ERROR: table already exists");
-        }else
+        }else{
             TABLES.add(T);  //must be added to memory only after determining if table can be created
+        }
         //insert new tablename into cat table
         if(!CATTING){
             CATTING = true;
