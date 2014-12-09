@@ -3,7 +3,7 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = 0;
+	$_SESSION['security'] = "0";
 }
 
 //setting path name to variable
@@ -12,6 +12,8 @@ $path = dirname(__FILE__);
 
 //run javac on BibliobaseDBMS.java once
 //exec("javac database_mgmt/BiblioBaseDBMS.java");
+
+$level = shell_exec("cd $path && java database_mgmt/BiblioBaseDBMS");
 	
 //sets variable to search text field if set and if not to *
 if(!isset($_POST["atextsearch"]) || $_POST["atextsearch"] == null){
@@ -115,7 +117,7 @@ if($_POST["checkOut"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != 0){	
+				if($_SESSION['security'] >= "1"){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -125,11 +127,10 @@ if($_POST["checkOut"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if($_SESSION['security'] > 3){?>
+					if($_SESSION['security'] >= "2"){?>
                     <li><a href="add.php">Add Material</a></li>
-					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == 4){
+					if($_SESSION['security'] >= "3"){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>

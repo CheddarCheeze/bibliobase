@@ -3,7 +3,7 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = 0;
+	$_SESSION['security'] = "0";
 }
 
 //setting path name to variable
@@ -77,6 +77,11 @@ if($_POST["subCol"]){
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 	
 	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	
+	<?php if($_SESSION['security'] <= 2){
+		?><meta http-equiv="refresh" content="1; url=index.html"><?php
+	}
+	?>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -117,7 +122,7 @@ if($_POST["subCol"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != 0){	
+				if($_SESSION['security'] >= "1"){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -127,11 +132,10 @@ if($_POST["subCol"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if($_SESSION['security'] > 3){?>
+					if($_SESSION['security'] >= "2"){?>
                     <li><a href="add.php">Add Material</a></li>
-					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == 4){
+					if($_SESSION['security'] >= "3"){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>

@@ -1,5 +1,10 @@
 <?php 
-session_start()
+session_start();
+
+if(!isset($_SESSION['username'])){
+	$_SESSION['security'] = "0";
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +24,15 @@ session_start()
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	
+	<?php if($_SESSION['security'] == 0){
+		?><meta http-equiv="refresh" content="1; url=index.html"><?php
+	}
+	?>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -62,7 +76,7 @@ session_start()
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != "guest"){	
+				if($_SESSION['security'] >= "1"){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -72,11 +86,10 @@ session_start()
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if(($_SESSION['security'] == "Patron") || ($_SESSION['security'] == "Administrator")){?>
+					if($_SESSION['security'] >= "2"){?>
                     <li><a href="add.php">Add Material</a></li>
-					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == "Administrator"){
+					if($_SESSION['security'] >= "3"){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>
@@ -115,7 +128,6 @@ session_start()
             </div>
           </div>
         </div>
-
       </div>
     </div>
 	<div id="backg">

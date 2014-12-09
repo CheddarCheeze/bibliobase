@@ -3,7 +3,7 @@ session_start();
 
 //if not logged in set security settings to guest
 if(!isset($_SESSION['username'])){
-	$_SESSION['security'] = 0;
+	$_SESSION['security'] = "0";
 }
 
 //if logout button is clicked, supposed to unset login info
@@ -57,6 +57,11 @@ if($_POST["addConfirm"]){
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 	
+	<?php if($_SESSION['security'] <= 1){
+		?><meta http-equiv="refresh" content="1; url=index.html"><?php
+	}
+	?>
+	
 	<script>
 	function turnOff()
 	{
@@ -103,7 +108,7 @@ if($_POST["addConfirm"]){
                 <li><a href="#about">About</a></li>
 				<?php 
 				//only show My Desk if person is logged in
-				if($_SESSION['security'] != 0){	
+				if($_SESSION['security'] >= "1"){	
 				?>
 				<li><a href="first.php">My Desk</a></li>
 				<?php }?>
@@ -113,11 +118,10 @@ if($_POST["addConfirm"]){
                     <li><a href="search.php">Search</a></li>
 					<?php 
 					//only show if person logged in is a patron or admin
-					if($_SESSION['security'] > 3){?>
+					if($_SESSION['security'] >= "2"){?>
                     <li><a href="add.php">Add Material</a></li>
-					<li><a href="#">Delete Material</a></li>
 					<?php }
-					if($_SESSION['security'] == 4){
+					if($_SESSION['security'] >= "3"){
 					?>
 					<li><a href="create.php">Create Table</a></li>
 					<li><a href="#">Modify Table</a></li>
@@ -151,12 +155,11 @@ if($_POST["addConfirm"]){
 						?>
 						<form  name="logout" class="navbar-form navbar-right" action="index.html">
 							Welcome, <?php echo $_SESSION['username'];?><br>
-							<input type="submit" name="logout" id="logout" class="btn btn-default" value="Log Out"></form><?
+							<button class="btn btn-default" name="logout"><a href="logout.php">Log Out</a></button></form><?
 					}?>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 	<div id="backg">
