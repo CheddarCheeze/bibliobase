@@ -249,10 +249,10 @@ public class BiblioBaseDBMS {
         //Check for DROP behavior and act
         w = word.get(3).toUpperCase();
         if(w.equals("DROP")){
-            if(word.size() != 5){
+            if(word.size() != 6){
                 throw new IllegalArgumentException("ERROR: too many words for DROP column in ALTER command");
             }
-            w = word.get(4);
+            w = word.get(5);
             if(isValue(w)){
                 TABLES.get(tI).deleteAttribute(w);
             }
@@ -278,6 +278,11 @@ public class BiblioBaseDBMS {
                 if(!filesystem.renameTable(tableName, word.get(5), DATABASE_NAME)){
                     throw new IllegalArgumentException("ERROR: another table already has that name");
                 }
+                CATTING = true;
+                parseString("delete from cat where table = \'"+tableName+"\';");
+                TABLES.clear();
+                CATTING = true;
+                parseString("insert into cat values (\'"+word.get(5)+"\');");
                 TABLES.get(tI).setTableName(word.get(5));
                 return;
             }else{
@@ -1392,13 +1397,13 @@ public class BiblioBaseDBMS {
                     go = false;
                 } 
                 else{
-//                    try{
-//                        parseString(s);
-//                    }
-//                    catch (Exception e){
-//                        System.out.println(e.getMessage());
-//                    }
-                    parseString(s);
+                    try{
+                        parseString(s);
+                    }
+                    catch (Exception e){
+                        System.out.println(e.getMessage());
+                    }
+                    //parseString(s);
                 }
             }
             sc.close();

@@ -10,8 +10,11 @@ select * from friends;
 delete from friends where hobby = clavicord;
 select * from friends;
 select name, birthdate, hobby from friends where hobby = 'guitar';
+select * from friends where hobby = 'guitar' and age = 25 or ID = 2;
 delete from friends;
+select * from friends;
 drop table friends;
+select * from friends;
 
 create table Book ('title' string,'author' string,'genre' string,'ISBN' float,'avail' string);
 insert into Book values ('Harry Potter 1','J. K. Rowling','Fantasy','00000001','True');
@@ -19,6 +22,10 @@ insert into Book values ('Harry Potter 2','J. K. Rowling','Fantasy','00000002','
 insert into Book values ('Harry Potter 3','J. K. Rowling','Fantasy','00000003','False');
 insert into Book values ('Hitchhiker's Guide to the Galaxy','Douglas Adams','Sci-fi','00000004','False');
 insert into Book values ('The Dark Tower 1','Steven King','Fantasy','00000005','False');
+insert into Book values ('The Dark Tower 2','Steven King','Fantasy','00000006','False');
+insert into Book values ('Black Hole','Charles Burns','Horror','00000007','True');
+insert into Book values ('Black Hole','Charles Burns','Horror','00000007','False');
+insert into Book values ('Godel, Escher, Bach','Douglas Hofstadter','Philosophy','00000008','True');
 create table DVD ('title' string,'director' string,'genre' string,'ISBN' float,'avail' string);
 insert into DVD values ('2001: A Space Odyssey','Stanley Kubrick','Sci-fi','00000011','True');
 insert into DVD values ('Inception','Christopher Nolan','Sci-fi','00000012','False');
@@ -35,4 +42,56 @@ update Book set avail = 'True';
 select * from Book;
 select * from DVD;
 
-select * from Book inner join DVD on Book.ID = DVD.ID;
+------------------------------------------------
+--login to -test
+select * from Book;
+select * from DVD;
+select * from Book inner join DVD on Book.genre = DVD.genre;
+select DVD.title,DVD.genre,Book.title,Book.genre from Book inner join DVD on Book.genre = DVD.genre where DVD.director = "Stanley Kubrick";
+
+select * from cat;
+
+create table friends('name' string 'hobby' string 'birthdate' date 'age' float);
+insert into friends values ('Jane H. Kang','guitar','14-3-1989',25);
+insert into friends values ('Mr. Burns','lute','16-6-1900',114);
+insert into friends values ('King Soandso','clavicord','01-5-1877',114);
+insert into friends (name,hobby) values ('echo','guitar');
+
+select * from cat;
+
+select * from friends;
+update friends set hobby = 'dancing' where hobby = 'lute';
+select * from friends;
+update friends set name = "NEW NAME",age = 0 where birthdate = null;
+select * from friends;
+delete from friends where hobby = clavicord;
+select * from friends;
+select name, birthdate, hobby from friends where hobby = 'guitar';
+select * from friends where hobby = 'guitar' and age = 25 or ID = 2;
+get attributes from friends;
+delete from friends;
+select * from friends;
+drop table friends;
+select * from friends;
+
+select * from cat;
+
+alter table Book rename to Books;
+alter table Books add "NEW_COLUMN" string;
+select * from Books;
+alter table Books add ("A" string,"B" string,"C" string);
+select * from Books;
+alter table Books drop column A;
+select * from Books;
+
+
+--------------------------------------------------
+--login to -admin
+create database newdb;
+select * from sysdatabases;
+alter database newdb rename to newdb2;
+select * from sysdatabases;
+
+--login to -newdb2
+select * from cat;
+
